@@ -41,24 +41,50 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+# قاموس الجهات والملفات
+ENTITIES = {
+    "بلدية رأس الخيمة": {
+        "csv": "MUN.csv",
+        "xlsx": "Digital_Data_tables2.xlsx",
+    },
+    "محاكم رأس الخيمة": {
+        "csv": "CR.csv",
+        "xlsx": "Digital_Data_tables3.xlsx",
+    },
+    "النيابة العامة في رأس الخيمة": {
+        "csv": "PR.csv",
+        "xlsx": "Digital_Data_tables4.xlsx",
+    },
+    "دائرة التنمية الاقتصادية": {
+        "csv": "DED.csv",
+        "xlsx": "Digital_Data_tables5.xlsx",
+    },
+    "جمارك رأس الخيمة": {
+        "csv": "CU.csv",
+        "xlsx": "Digital_Data_tables6.xlsx",
+    },
+    "هيئة حماية البيئة والتنمية": {
+        "csv": "EN.csv",
+        "xlsx": "Digital_Data_tables7.xlsx",
+    },
+}
+
 # =========================================================
 # تحميل البيانات
-# =========================================================
-@st.cache_data(show_spinner=False)
-
 # =========================================================
 # تحميل البيانات مع إضافة سطر المعاني (Arabic Labels)
 # =========================================================
 @st.cache_data(show_spinner=False)
-def load_data():
+def load_data(csv_name: str, xlsx_name: str):
     # البيانات الرئيسية
-    df = pd.read_csv("MUN.csv", encoding="utf-8", low_memory=False)
+    df = pd.read_csv(csv_name, encoding="utf-8", low_memory=False)
     df.columns = [c.strip().upper() for c in df.columns]
     df.columns = [c.replace('DIM', 'Dim') for c in df.columns]
 
     # الجداول الوصفية
     lookup_catalog = {}
-    xls_path = Path("Digital_Data_tables2.xlsx")
+    xls_path = Path(xlsx_name)
     if xls_path.exists():
         xls = pd.ExcelFile(xls_path)
         for sheet in xls.sheet_names:
@@ -137,7 +163,18 @@ def autodetect_metric_cols(df: pd.DataFrame):
 
     return csat_col, ces_col, nps_col
 
-df, lookup_catalog = load_data()
+# اختيار الجهة من الشريط الجانبي
+st.sidebar.title("اختيار الجهة")
+selected_entity = st.sidebar.selectbox("الرجاء اختيار الجهة:", list(ENTITIES.keys()))
+
+# الحصول على أسماء الملفات حسب الجهة المختارة
+csv_name = ENTITIES[selected_entity]["csv"]
+xlsx_name = ENTITIES[selected_entity]["xlsx"]
+
+# تحميل البيانات الخاصة بالجهة المختارة
+df, lookup_catalog = load_data(csv_name, xlsx_name)
+
+st.sidebar.markdown(f"**الجهة الحالية:** {selected_entity}")
 
 
 st.sidebar.header("🎛️ الفلاتر")
@@ -682,3 +719,4 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
