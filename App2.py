@@ -336,7 +336,7 @@ tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.ta
 # تبويب البيانات + تنزيل
 # =========================================================
 with tab_data:
-    st.subheader("📁 البيانات (بعد الفلترة)")
+    st.subheader("📁 البيانات)")
     st.dataframe(df_view, use_container_width=True)
     ts = datetime.now().strftime("%Y-%m-%d_%H%M")
     buf = io.BytesIO()
@@ -808,6 +808,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
