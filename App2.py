@@ -913,7 +913,7 @@ with tab_pareto:
             )
             fig.update_layout(
                 title={
-                "text": "📊 المحاور الرئيسية - تحليل باريتو",
+                "text": "📊 تحليل باريتو - المحاور الرئيسية",
                     "x": 0.5,
                     "y": 0.95,
                     "xanchor": "center",
@@ -938,6 +938,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
