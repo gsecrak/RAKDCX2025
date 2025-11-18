@@ -41,14 +41,17 @@ st.markdown("""
             font-family: "Tajawal","Cairo","Segoe UI";
         }
 
-        /* جعل التبويبات تبدأ من جهة اليمين وبالترتيب من اليمين لليسار */
-        .stTabs [data-baseweb="tab-list"] {
-            flex-direction: row-reverse !important;   /* أول تبويب يكون عند اليمين */
-            justify-content: flex-start !important;   /* التبويبات تلتصق باليمين */
+        /* قلب ترتيب التبويبات وجعلها تبدأ من اليمين */
+        .stTabs [data-baseweb="tab-list"],
+        div[role="tablist"] {
+            display: flex !important;
+            flex-direction: row-reverse !important;  /* أول تبويب عند اليمين */
+            justify-content: flex-start !important;  /* التبويبات تلتصق باليمين */
         }
 
-        /* جعل نص كل تبويب يميني الاتجاه */
-        .stTabs [data-baseweb="tab"] {
+        /* جعل نص التبويب نفسه RTL ومحاذى يمين */
+        .stTabs [data-baseweb="tab"],
+        div[role="tab"] {
             direction: rtl !important;
             text-align: right !important;
         }
@@ -806,6 +809,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
