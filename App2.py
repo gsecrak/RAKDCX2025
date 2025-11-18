@@ -41,13 +41,16 @@ st.markdown("""
             font-family: "Tajawal","Cairo","Segoe UI";
         }
 
-        /* جعل شريط التبويبات يلتصق باليمين بدل اليسار */
+        /* شريط التبويبات: ترتيب من اليمين لليسار + التصاق كامل باليمين */
         .stTabs [data-baseweb="tab-list"] {
             display: flex !important;
-            justify-content: flex-end !important;   /* يمين الحاوية */
+            flex-direction: row-reverse !important;   /* أول تبويب على اليمين */
+            justify-content: flex-start !important;   /* يبدأ من يمين الحاوية */
+            margin-right: 0 !important;
+            margin-left: auto !important;             /* يزق الشريط كله ناحية اليمين */
         }
 
-        /* جعل نص التبويب نفسه يمين و RTL */
+        /* نص كل تبويب يكون RTL ومحاذى يمين */
         .stTabs [data-baseweb="tab"] > div {
             direction: rtl !important;
             text-align: right !important;
@@ -58,6 +61,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 
 # قاموس الجهات والملفات
@@ -806,6 +810,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
