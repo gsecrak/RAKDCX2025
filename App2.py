@@ -74,6 +74,13 @@ ENTITIES = {
         "xlsx": "Digital_Data_tables7.xlsx",
         "password": "RAK-EN!48rN^2025",
     },
+     # 👇 جهة الأدمن (تجميع كل الجهات)
+    "الأمانة العامة للمجلس التنفيذي": {
+        "csv": None,         # لن نستخدمها
+        "xlsx": None,        # لن نستخدمها
+        "password": "RAK-EC!99Adm@2025",
+        "aggregated": True,  # علامة أنها جهة تجميع
+    },
 }
 
 # =========================================================
@@ -118,7 +125,40 @@ def load_data(csv_name: str, xlsx_name: str):
                 df = pd.concat([arabic_df, df], ignore_index=True)
 
     return df, lookup_catalog
+def load_all_entities():
+    """تحميل بيانات جميع الجهات ودمجها في DataFrame واحد مع عمود ENTITY_NAME"""
+    frames = []
+    combined_lookup = {}
 
+    for name, conf in ENTITIES.items():
+        # نتخطى جهة الأدمن نفسها
+        if conf.get("aggregated"):
+            continue
+
+        csv_name = conf["csv"]
+        xlsx_name = conf["xlsx"]
+        df_i, lookup_i = load_data(csv_name, xlsx_name)
+
+        if df_i is None or df_i.empty:
+            continue
+
+        df_i = df_i.copy()
+        # نضيف عمود باسم الجهة
+        df_i.insert(0, "ENTITY_NAME", name)
+
+        frames.append(df_i)
+
+        # دمج lookup_catalog (نأخذ أول نسخة من كل شيت)
+        for k, v in lookup_i.items():
+            if k not in combined_lookup:
+                combined_lookup[k] = v
+
+    if frames:
+        df_all = pd.concat(frames, ignore_index=True)
+    else:
+        df_all = pd.DataFrame()
+
+    return df_all, combined_lookup
 
 
 def series_to_percent(vals: pd.Series):
@@ -173,11 +213,10 @@ def autodetect_metric_cols(df: pd.DataFrame):
 st.sidebar.title("اختيار الجهة")
 selected_entity = st.sidebar.selectbox("الرجاء اختيار الجهة:", list(ENTITIES.keys()))
 
-# إعداد ملفات الجهة + كلمة المرور الصحيحة
+# إعداد إعدادات الجهة المختارة
 entity_conf = ENTITIES[selected_entity]
-csv_name = entity_conf["csv"]
-xlsx_name = entity_conf["xlsx"]
 correct_password = entity_conf["password"]
+is_aggregated = entity_conf.get("aggregated", False)
 
 # إدخال كلمة المرور
 password_input = st.sidebar.text_input(
@@ -194,8 +233,16 @@ elif password_input != correct_password:
     st.error("❌ كلمة المرور غير صحيحة. الرجاء المحاولة مرة أخرى.")
     st.stop()
 else:
-    # تحميل البيانات الخاصة بالجهة المختارة بعد التحقق
-    df, lookup_catalog = load_data(csv_name, xlsx_name)
+    # بعد التحقق من كلمة المرور
+    if is_aggregated:
+        # جهة الأدمن: تحميل كل الجهات معًا
+        df, lookup_catalog = load_all_entities()
+    else:
+        # جهة عادية: تحميل ملف واحد فقط
+        csv_name = entity_conf["csv"]
+        xlsx_name = entity_conf["xlsx"]
+        df, lookup_catalog = load_data(csv_name, xlsx_name)
+
     st.sidebar.markdown(f"**الجهة الحالية:** {selected_entity}")
 
 
@@ -206,7 +253,7 @@ df_filtered = df.copy()
 # سنعرض فلاتر لأكثر الحقول شيوعًا؛ ويمكن التوسع تلقائيًا إذا وُجدت جداول مطابقة في الـ lookup
 candidate_filter_cols = []
 # أبعاد ديموغرافية أو وصفية شائعة
-common_keys = ["Language", "SERVICE", "AGE", "PERIOD", "CHANNEL"]
+common_keys = ["Language", "SERVICE", "AGE", "PERIOD", "CHANNEL", "ENTITY_NAME"]
 candidate_filter_cols = [c for c in df.columns if any(k in c.upper() for k in common_keys)]
 
 # وظيفة لتطبيق جدول lookup إذا توفّر باسم العمود
@@ -741,6 +788,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
