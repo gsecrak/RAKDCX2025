@@ -44,7 +44,7 @@ st.markdown("""
         /* شريط التبويبات: يمين بالكامل وبالترتيب من اليمين لليسار */
         .stTabs [data-baseweb="tab-list"] {
             display: flex !important;
-            flex-direction: row-reverse !important;   /* أول تبويب على اليمين */
+            flex-direction: row !important;       /* ترتيب عادي */
             justify-content: flex-end !important;     /* لصق التبويبات بأقصى يمين الحاوية */
             width: 100% !important;                   /* الحاوية تمتد على عرض الصف */
         }
@@ -810,6 +810,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
