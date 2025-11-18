@@ -41,16 +41,22 @@ st.markdown("""
             font-family: "Tajawal","Cairo","Segoe UI";
         }
 
-        /* حاوية التبويبات نفسها تكون LTR عشان flex-end يودّيها يمين */
-        .stTabs [data-baseweb="tab-list"] {
-            direction: ltr !important;            /* مهم جداً */
+        /* نجعل حاوية التبويبات كلها تتجه يمين الصف */
+        .stTabs {
             display: flex !important;
-            flex-direction: row !important;       /* ترتيب عادي */
-            justify-content: flex-end !important; /* لصق التبويبات بأقصى يمين الحاوية */
+            justify-content: flex-end !important;  /* تدفش شريط التبويبات ليمين الصفحة */
             width: 100% !important;
         }
 
-        /* نص داخل كل تبويب يبقى عربي يمين */
+        /* شريط التبويبات نفسه: اتجاه عربي وترتيب طبيعي */
+        .stTabs [data-baseweb="tab-list"] {
+            direction: rtl !important;             /* أول تبويب يكون عند اليمين */
+            display: inline-flex !important;
+            flex-direction: row !important;        /* بدون عكس */
+            justify-content: flex-start !important;/* يبدأ من اليمين ويتجه لليسار */
+        }
+
+        /* نص التبويب */
         .stTabs [data-baseweb="tab"] > div {
             direction: rtl !important;
             text-align: right !important;
@@ -61,6 +67,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 # قاموس الجهات والملفات
 ENTITIES = {
@@ -808,6 +815,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
