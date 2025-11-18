@@ -675,14 +675,20 @@ with tab_dimensions:
                     "🟢 جيد":   "#6BCB77",
                     "🔵 ممتاز": "#4D96FF"
                 },
-                title="تحليل متوسط الأبعاد"
+                title="<span style='font-size:28px; font-weight:bold;'>📊 تحليل متوسط الأبعاد</span>"
             )
             fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig.update_layout(
+                title={
+                    'text': "<span style='font-size:28px; font-weight:bold;'>📊 تحليل متوسط الأبعاد</span>",
+                    'x': 0.5,  # المنتصف
+                    'xanchor': 'center'
+                },
                 yaxis=dict(range=[0, 100]),
                 xaxis_title="البعد",
                 yaxis_title="النسبة المئوية (%)"
             )
+
             st.plotly_chart(fig, use_container_width=True)
 
             # عرض جدول الأبعاد
@@ -894,6 +900,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
