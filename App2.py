@@ -32,7 +32,6 @@ st.markdown(f"""
     <hr style="margin-top:20px; margin-bottom:10px;">
 """, unsafe_allow_html=True)
 
-# اتجاه عربي وخط مناسب
 st.markdown("""
     <style>
         html, body, [class*="css"] {
@@ -41,15 +40,15 @@ st.markdown("""
             font-family: "Tajawal","Cairo","Segoe UI";
         }
 
-        /* شريط التبويبات: يمين بالكامل وبالترتيب من اليمين لليسار */
+        /* شريط التبويبات: يمين ولكن بالترتيب الطبيعي */
         .stTabs [data-baseweb="tab-list"] {
             display: flex !important;
+            /* احذفي row-reverse وخليها عادي */
             flex-direction: row !important;       /* ترتيب عادي */
-            justify-content: flex-end !important;     /* لصق التبويبات بأقصى يمين الحاوية */
-            width: 100% !important;                   /* الحاوية تمتد على عرض الصف */
+            justify-content: flex-end !important; /* التصاق التبويبات باليمين */
+            width: 100% !important;
         }
 
-        /* نص كل تبويب RTL ومحاذى يمين */
         .stTabs [data-baseweb="tab"] > div {
             direction: rtl !important;
             text-align: right !important;
@@ -60,6 +59,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
@@ -810,6 +810,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
