@@ -782,16 +782,48 @@ with tab_services:
 
             st.dataframe(summary.style.format(fmt), use_container_width=True, hide_index=True)
 
-            # رسم مقارنة (سعادة/قيمة)
-            if "سعادة (%)" in summary.columns or "قيمة (%)" in summary.columns:
-                melted = summary.melt(id_vars=["SERVICE"], value_vars=[v for v in ["سعادة (%)","قيمة (%)"] if v in summary.columns],
-                                      var_name="المؤشر", value_name="القيمة")
-                fig = px.bar(melted, x="SERVICE", y="القيمة", color="المؤشر", barmode="group",
-                             text="القيمة", color_discrete_sequence=PASTEL,
-                             title="مقارنة مؤشرات الخدمة")
-                fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-                fig.update_layout(yaxis=dict(range=[0, 100]), xaxis_title="الخدمة", yaxis_title="النسبة (%)")
-                st.plotly_chart(fig, use_container_width=True)
+# رسم مقارنة (سعادة/قيمة)
+if "سعادة (%)" in summary.columns or "قيمة (%)" in summary.columns:
+    melted = summary.melt(
+        id_vars=["SERVICE"],
+        value_vars=[v for v in ["سعادة (%)", "قيمة (%)"] if v in summary.columns],
+        var_name="المؤشر",
+        value_name="القيمة"
+    )
+
+    fig = px.bar(
+        melted,
+        x="SERVICE",
+        y="القيمة",
+        color="المؤشر",
+        barmode="group",
+        text="القيمة",
+        color_discrete_sequence=PASTEL,
+        title="مقارنة مؤشري السعادة والقيمة حسب الخدمة"
+    )
+
+    fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+
+    fig.update_layout(
+        yaxis=dict(range=[0, 100]),
+        xaxis_title="الخدمة",
+        yaxis_title="النسبة (%)"
+    )
+
+    # 🔥 تكبير العنوان + توسيطه
+    fig.update_layout(
+        title={
+            "text": "مقارنة مؤشري السعادة والقيمة حسب الخدمة",
+            "x": 0.5,
+            "y": 0.95,
+            "xanchor": "center",
+            "yanchor": "top"
+        },
+        title_font_size=22   # ← يمكنك تغييرها لـ 24 أو 20 حسب رغبتك
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # =========================================================
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
@@ -903,6 +935,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
