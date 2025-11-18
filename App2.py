@@ -492,10 +492,11 @@ with tab_sample:
 
             fig.update_layout(
                 title={"text": title_text, "x": 0.5},
-                fig.update_layout(title_font_size=20),
                 height=500,
             )
 
+            fig.update_layout(title_font_size=20)
+            
             # تعديل النص حسب اختيار المستخدم
             if display_mode == "العدد فقط":
                 fig.update_traces(
@@ -902,6 +903,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
