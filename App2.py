@@ -919,7 +919,7 @@ with tab_pareto:
                     "xanchor": "center",
                     "yanchor": "top"
                 },
-                title_font_size=22,
+                title_font_size=20,
                 xaxis=dict(title="المحور", tickangle=-15),
                 yaxis=dict(title="عدد الملاحظات"),
                 yaxis2=dict(title="النسبة التراكمية (%)", overlaying="y", side="right", range=[0, 110]),
@@ -938,6 +938,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
