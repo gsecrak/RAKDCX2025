@@ -822,7 +822,6 @@ with tab_services:
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-
 # =========================================================
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
 # =========================================================
@@ -912,26 +911,23 @@ with tab_pareto:
                 textposition="top center",
                 line=dict(color="#2E86DE", width=3)
             )
-fig.update_layout(
-    title={
-        "text": "📊 المحاور الرئيسية - تحليل باريتو",
-        "x": 0.5,
-        "y": 0.95,
-        "xanchor": "center",
-        "yanchor": "top"
-    },
-    title_font_size=22,
-    xaxis=dict(title="المحور", tickangle=-15),
-    yaxis=dict(title="عدد الملاحظات"),
-    yaxis2=dict(title="النسبة التراكمية (%)", overlaying="y", side="right", range=[0, 110]),
-    height=600,
-    bargap=0.3,
-    legend=dict(orientation="h", y=-0.2)
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-
+            fig.update_layout(
+                title={
+                "text": "📊 المحاور الرئيسية - تحليل باريتو",
+                    "x": 0.5,
+                    "y": 0.95,
+                    "xanchor": "center",
+                    "yanchor": "top"
+                },
+                title_font_size=22,
+                xaxis=dict(title="المحور", tickangle=-15),
+                yaxis=dict(title="عدد الملاحظات"),
+                yaxis2=dict(title="النسبة التراكمية (%)", overlaying="y", side="right", range=[0, 110]),
+                height=600,
+                bargap=0.3,
+                legend=dict(orientation="h", y=-0.2)
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 # =========================================================
 # تحسينات شكلية
@@ -942,6 +938,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
