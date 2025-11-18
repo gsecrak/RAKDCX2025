@@ -495,7 +495,7 @@ with tab_sample:
                 height=500,
             )
 
-            fig.update_layout(title_font_size=20)
+            fig.update_layout(title_font_size=18)
             
             # تعديل النص حسب اختيار المستخدم
             if display_mode == "العدد فقط":
@@ -935,6 +935,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
