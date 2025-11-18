@@ -265,6 +265,15 @@ else:
 
     st.sidebar.markdown(f"**الجهة الحالية:** {selected_entity}")
 
+# عناوين عربية للفلاتر
+ARABIC_FILTER_TITLES = {
+    "AGE": "العمر",
+    "SERVICE": "الخدمة",
+    "LANGUAGE": "اللغة",
+    "PERIOD": "الفترة",
+    "CHANNEL": "القناة",
+    "ENTITY_NAME": "الجهة"
+}
 
 st.sidebar.header("🎛️ الفلاتر")
 # نحاول تطبيق ترجمة للأبعاد/المتغيرات باستخدام جداول الـ lookup إذا وجدت
@@ -317,14 +326,23 @@ for col in candidate_filter_cols:
 
 with st.sidebar.expander("تطبيق/إزالة الفلاتر"):
     applied_filters = {}
+
     for col in candidate_filter_cols:
-        # طبّق الترجمة العربية إن وُجدت
+
+        # طبّق الترجمة على القيم داخل الفلاتر
         df_filtered[col] = apply_lookup(col, df_filtered[col])
+
+        # الخيارات المتاحة للقائمة
         options = df_filtered_display[col].dropna().unique().tolist()
         options_sorted = sorted(options, key=lambda x: str(x))
-        default = options_sorted  # افتراضيًا: الكل
-        sel = st.multiselect(f"{col}", options_sorted, default=default)
-        applied_filters[col] = sel
+        default = options_sorted
+
+        # اختيار العنوان العربي إذا كان موجودًا
+        label = ARABIC_FILTER_TITLES.get(col.upper(), col)
+
+        # عرض الفلتر باستخدام الاسم العربي
+        sel = st.multiselect(label, options_sorted, default=defa_
+
 
 # تطبيق الفلاتر
 for col, selected in applied_filters.items():
@@ -874,6 +892,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
