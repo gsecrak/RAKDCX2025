@@ -372,7 +372,7 @@ tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.ta
     "📊 المؤشرات",
     "🧩 الأبعاد",
     "📋 الخدمات",
-    "💬 الملاحظات (Pareto)"
+    "💬 المزعجات"
 ])
 
 # =========================================================
@@ -797,7 +797,7 @@ with tab_services:
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
 # =========================================================
 with tab_pareto:
-    st.subheader("💬 تحليل أسباب عدم الرضا في الخدمات الرقمية (Pareto)")
+    st.subheader("💬 تحليل المزعجات")
 
     unsat_col = next((c for c in df_view.columns if "MOST_UNSAT" in c.upper()), None)
     if not unsat_col:
@@ -883,7 +883,7 @@ with tab_pareto:
                 line=dict(color="#2E86DE", width=3)
             )
             fig.update_layout(
-                title="📊 تحليل Pareto لأسباب عدم الرضا في الخدمات الرقمية",
+                title="📊 المحاور الرئيسية - تحليل باريتو",
                 xaxis=dict(title="المحور", tickangle=-15),
                 yaxis=dict(title="عدد الملاحظات"),
                 yaxis2=dict(title="النسبة التراكمية (%)", overlaying="y", side="right", range=[0, 110]),
@@ -903,6 +903,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
