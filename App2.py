@@ -391,31 +391,65 @@ with tab_sample:
             y_label = "عدد الردود"
             text_col = counts.apply(lambda x: f"{x['Count']} ({x['Percentage']:.1f}%)", axis=1)
 
-        # === رسم المخطط ===
-        title_text = f"توزيع {col}"
+       # === رسم المخطط ===
+# استخراج التسمية العربية من الصف الأول (صف المعاني)
+try:
+    arabic_label = df.iloc[0][col]
+    if isinstance(arabic_label, str) and arabic_label.strip():
+        col_label = arabic_label
+    else:
+        col_label = col
+except:
+    col_label = col
 
-        if chart_type == "مخطط أعمدة":
-            fig = px.bar(
-                counts,
-                x=col,
-                y=y_col,
-                text=text_col,
-                color=col,
-                color_discrete_sequence=PASTEL,
-                title=title_text
-            )
-            fig.update_traces(textposition="outside")
+if chart_type == "مخطط أعمدة":
+    title_text = f"توزيع {col_label}"
 
-        else:  # مخطط دائري
-            fig = px.pie(
-                counts,
-                names=col,
-                values="Count",
-                hole=0.3,
-                color=col,
-                color_discrete_sequence=PASTEL,
-                title=title_text
-            )
+    fig = px.bar(
+        counts,
+        x=col,
+        y=y_col,
+        text=text_col,
+        color=col,
+        color_discrete_sequence=PASTEL,
+        title=title_text
+    )
+
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        title={'text': title_text, 'x': 0.5},
+        xaxis_title="الفئة",
+        yaxis_title=y_label,
+        showlegend=False,
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+else:  # === مخطط دائري ===
+    title_text = f"توزيع {col_label}"
+
+    fig = px.pie(
+        counts,
+        names=col,
+        values="Count",
+        hole=0.3,
+        color=col,
+        color_discrete_sequence=PASTEL,
+        title=title_text
+    )
+
+    fig.update_layout(title={'text': title_text, 'x': 0.5})
+
+    # تعديل النص حسب اختيار المستخدم
+    if display_mode == "العدد فقط":
+        fig.update_traces(textposition="inside", texttemplate="%{label}<br>%{value}")
+    elif display_mode == "النسبة فقط":
+        fig.update_traces(textposition="inside", texttemplate="%{label}<br>%{percent:.1%}")
+    else:
+        fig.update_traces(textposition="inside", texttemplate="%{label}<br>%{value} (%{percent:.1%})")
+
+    st.plotly_chart(fig, use_container_width=True)
 
             # تعديل النص حسب اختيار العرض
             if display_mode == "العدد فقط":
@@ -812,6 +846,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
