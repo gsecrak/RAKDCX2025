@@ -379,7 +379,7 @@ tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.ta
 # تبويب البيانات + تنزيل
 # =========================================================
 with tab_data:
-    st.subheader("📁 البيانات")
+    # st.subheader("📁 البيانات")
     st.dataframe(df_view, use_container_width=True)
     ts = datetime.now().strftime("%Y-%m-%d_%H%M")
     buf = io.BytesIO()
@@ -471,6 +471,7 @@ with tab_sample:
             fig.update_traces(textposition="outside")
             fig.update_layout(
                 title={"text": title_text, "x": 0.5},
+                fig.update_layout(title_font_size=20)
                 xaxis_title="الفئة",
                 yaxis_title=y_label,
                 showlegend=False,
@@ -491,6 +492,7 @@ with tab_sample:
 
             fig.update_layout(
                 title={"text": title_text, "x": 0.5},
+                fig.update_layout(title_font_size=20)
                 height=500,
             )
 
@@ -900,6 +902,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
