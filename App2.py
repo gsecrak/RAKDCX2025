@@ -393,15 +393,19 @@ with tab_sample:
 
         # === رسم المخطط ===
         if chart_type == "مخطط أعمدة":
-            fig = px.bar(
-                counts,
-                x=col,
-                y=y_col,
-                text=text_col,
-                color=col,
-                color_discrete_sequence=PASTEL,
-                title=f"توزيع — {col}"
-            )
+        title_text = f"توزيع {col}"
+
+        fig = px.bar(
+            counts,
+            x=col,
+            y=y_col,
+            text=text_col,
+            color=col,
+            color_discrete_sequence=PASTEL,
+            title=title_text
+        )
+        fig.update_layout(title={'text': title_text, 'x': 0.5})
+
             fig.update_traces(textposition="outside")
             fig.update_layout(
                 xaxis_title="الفئة",
@@ -412,6 +416,8 @@ with tab_sample:
             st.plotly_chart(fig, use_container_width=True)
 
         else:  # === مخطط دائري ===
+            title_text = f"توزيع {col}"
+
             fig = px.pie(
                 counts,
                 names=col,
@@ -419,8 +425,9 @@ with tab_sample:
                 hole=0.3,
                 color=col,
                 color_discrete_sequence=PASTEL,
-                title=f"التوزيع حسب {col}"
+                title=title_text
             )
+            fig.update_layout(title={'text': title_text, 'x': 0.5})
 
             # تعديل النص حسب اختيار المستخدم
             if display_mode == "العدد فقط":
@@ -808,6 +815,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
