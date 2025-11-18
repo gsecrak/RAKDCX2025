@@ -24,7 +24,7 @@ st.set_page_config(page_title="لوحة تجربة المتعاملين — نس
 PASTEL = px.colors.qualitative.Pastel
 
 # شعار أعلى الصفحة (استبدل بالرابط المناسب إذا رغبت)
-LOGO_URL = "https://raw.githubusercontent.com/roum71/rakcx2025/main/assets/mini_header2.png"
+LOGO_URL = "https://raw.githubusercontent.com/roum71/rakcx2025/main/assets/mini_header3.png"
 st.markdown(f"""
     <div style="text-align:center; margin-top:-40px;">
         <img src="{LOGO_URL}" alt="Logo" style="width:950px; max-width:95%; height:auto;">
@@ -938,6 +938,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
