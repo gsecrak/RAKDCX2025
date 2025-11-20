@@ -66,32 +66,32 @@ st.markdown("""
 ENTITIES = {
     "بلدية رأس الخيمة": {
         "csv": "MUN.csv",
-        "xlsx": "Digital_Data_tables2.xlsx",
+        "xlsx": "Data_tables_MN.xlsx",
         "password": "RAK-MUN!93vB#2025",
     },
     "محاكم رأس الخيمة": {
         "csv": "CR.csv",
-        "xlsx": "Digital_Data_tables3.xlsx",
+        "xlsx": "Data_tables_CR.xlsx",
         "password": "RAK-CR!84zQ@2025",
     },
     "النيابة العامة في رأس الخيمة": {
         "csv": "PR.csv",
-        "xlsx": "Digital_Data_tables4.xlsx",
+        "xlsx": "Data_tables_PR.xlsx",
         "password": "RAK-PR!77xL&2025",
     },
     "دائرة التنمية الاقتصادية": {
         "csv": "DED.csv",
-        "xlsx": "Digital_Data_tables5.xlsx",
+        "xlsx": "Data_tables_EC.xlsx",
         "password": "RAK-DED!66pK*2025",
     },
     "جمارك رأس الخيمة": {
         "csv": "CU.csv",
-        "xlsx": "Digital_Data_tables6.xlsx",
+        "xlsx": "Data_tables_CU.xlsx",
         "password": "RAK-CU!59tM%2025",
     },
     "هيئة حماية البيئة والتنمية": {
         "csv": "EN.csv",
-        "xlsx": "Digital_Data_tables7.xlsx",
+        "xlsx": "Data_tables_EN.xlsx",
         "password": "RAK-EN!48rN^2025",
     },
      # 👇 جهة الأدمن (تجميع كل الجهات)
@@ -938,6 +938,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
