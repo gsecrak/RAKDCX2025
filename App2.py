@@ -16,7 +16,43 @@ import plotly.graph_objects as go
 import io, re
 from datetime import datetime
 from pathlib import Path
-
+USER_KEYS = {
+    "بلدية رأس الخيمة": {
+        "password": "RAK-MUN!93vB#2025",
+        "role": "center",
+        "file": "MUN.csv",      # بيانات بلدية رأس الخيمة
+    },
+    "محاكم رأس الخيمة": {
+        "password": "RAK-CR!84zQ@2025",
+        "role": "center",
+        "file": "CR.csv",       # بيانات المحاكم
+    },
+    "النيابة العامة في رأس الخيمة": {
+        "password": "RAK-PR!77xL&2025",
+        "role": "center",
+        "file": "PR.csv",       # بيانات النيابة العامة
+    },
+    "دائرة التنمية الاقتصادية": {
+        "password": "RAK-DED!66pK*2025",
+        "role": "center",
+        "file": "DED.csv",      # بيانات التنمية الاقتصادية
+    },
+    "جمارك رأس الخيمة": {
+        "password": "RAK-CU!59tM%2025",
+        "role": "center",
+        "file": "CU.csv",       # بيانات الجمارك
+    },
+    "هيئة حماية البيئة والتنمية": {
+        "password": "RAK-EN!48rN^2025",
+        "role": "center",
+        "file": "EN.csv",       # بيانات هيئة حماية البيئة
+    },
+    "الأمانة العامة للمجلس التنفيذي": {
+        "password": "RAK-EC!99Adm@2025",
+        "role": "admin",        # نفس فكرة Executive Council (صلاحية أعلى)
+        "file": "Centers_Master.csv"  # عدّلها لاسم ملف الإدارة العامة عندك إن كان مختلفًا
+    },
+}
 # =========================================================
 # إعداد الصفحة + اتجاه RTL
 # =========================================================
@@ -67,38 +103,31 @@ ENTITIES = {
     "بلدية رأس الخيمة": {
         "csv": "MUN.csv",
         "xlsx": "Data_tables_MN.xlsx",
-        "password": "RAK-MUN!93vB#2025",
     },
     "محاكم رأس الخيمة": {
         "csv": "CR.csv",
         "xlsx": "Data_tables_CR.xlsx",
-        "password": "RAK-CR!84zQ@2025",
     },
     "النيابة العامة في رأس الخيمة": {
         "csv": "PR.csv",
         "xlsx": "Data_tables_PR.xlsx",
-        "password": "RAK-PR!77xL&2025",
     },
     "دائرة التنمية الاقتصادية": {
         "csv": "DED.csv",
         "xlsx": "Data_tables_EC.xlsx",
-        "password": "RAK-DED!66pK*2025",
     },
     "جمارك رأس الخيمة": {
         "csv": "CU.csv",
         "xlsx": "Data_tables_CU.xlsx",
-        "password": "RAK-CU!59tM%2025",
     },
     "هيئة حماية البيئة والتنمية": {
         "csv": "EN.csv",
         "xlsx": "Data_tables_EN.xlsx",
-        "password": "RAK-EN!48rN^2025",
     },
      # 👇 جهة الأدمن (تجميع كل الجهات)
     "الأمانة العامة للمجلس التنفيذي": {
         "csv": None,         # لن نستخدمها
         "xlsx": None,        # لن نستخدمها
-        "password": "RAK-EC!99Adm@2025",
         "aggregated": True,  # علامة أنها جهة تجميع
     },
 }
@@ -1018,6 +1047,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
