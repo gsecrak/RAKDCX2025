@@ -995,6 +995,17 @@ with tab_pareto:
                 legend=dict(orientation="h", y=-0.2)
             )
             st.plotly_chart(fig, use_container_width=True)
+            # 📥 زر تنزيل النتائج
+            pareto_buffer = io.BytesIO()
+            with pd.ExcelWriter(pareto_buffer, engine="openpyxl") as writer:
+                pareto_display.to_excel(writer, index=False, sheet_name="Pareto_Results")
+
+            st.download_button(
+                "📥 تنزيل جدول Pareto (Excel)",
+                data=pareto_buffer.getvalue(),
+                file_name=f"Pareto_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 # =========================================================
 # تحسينات شكلية
@@ -1005,6 +1016,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
