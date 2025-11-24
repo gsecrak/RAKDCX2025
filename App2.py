@@ -126,8 +126,8 @@ ENTITIES = {
     },
      # 👇 جهة الأدمن (تجميع كل الجهات)
     "الأمانة العامة للمجلس التنفيذي": {
-        "csv": None,         # لن نستخدمها
-        "xlsx": None,        # لن نستخدمها
+        "csv": "Centers_Master.csv",         # لن نستخدمها
+        "xlsx": "Data_tables_MASTER.xlsx",        # لن نستخدمها
         "aggregated": True,  # علامة أنها جهة تجميع
     },
 }
@@ -1215,6 +1215,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
