@@ -1000,6 +1000,8 @@ with tab_pareto:
             with pd.ExcelWriter(pareto_buffer, engine="openpyxl") as writer:
                 pareto_display.to_excel(writer, index=False, sheet_name="Pareto_Results")
 
+            pareto_buffer.seek(0)  # مهم لضمان القراءة من البداية
+
             st.download_button(
                 "📥 تنزيل جدول Pareto (Excel)",
                 data=pareto_buffer.getvalue(),
@@ -1016,6 +1018,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
