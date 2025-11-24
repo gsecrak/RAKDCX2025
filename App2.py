@@ -802,8 +802,6 @@ with tab_services:
             sort_key = "سعادة (%)" if "سعادة (%)" in summary.columns else ("قيمة (%)" if "قيمة (%)" in summary.columns else None)
             if sort_key:
                 summary = summary.sort_values(sort_key, ascending=False)
-            # 🧭 ترتيب الجدول تنازليًا حسب السعادة
-            summary = summary.sort_values("Happiness / سعادة (٪)", ascending=False)
 
             # ✅ تلوين الخلايا في الجدول (السعادة والقيمة فقط)
             def color_cells(val):
@@ -820,14 +818,19 @@ with tab_services:
                     return f"background-color:{color};color:black"
                 except:
                     return ""
-            # عرض الجدول
-            fmt = {}
-            if "سعادة (%)" in summary.columns: fmt["سعادة (%)"] = "{:.1f}%"
-            if "قيمة (%)"  in summary.columns: fmt["قيمة (%)"]  = "{:.1f}%"
-            if "NPS (%)"   in summary.columns: fmt["NPS (%)"]   = "{:.1f}%"
-            if "عدد الردود" in summary.columns: fmt["عدد الردود"] = "{:,.0f}"
+            # 📋 عرض الجدول
+            styled_table = (
+                summary.style
+                .format({
+                    "Happiness / سعادة (٪)": "{:.1f}%",
+                    "Value / قيمة (٪)": "{:.1f}%",
+                    "NPS / صافي نقاط الترويج (٪)": "{:.1f}%",
+                    "عدد الردود / Responses": "{:,.0f}"
+                })
+                .applymap(color_cells, subset=["Happiness / سعادة (٪)", "Value / قيمة (٪)"])
+            )
+            st.dataframe(styled_table, use_container_width=True)
 
-            st.dataframe(summary.style.format(fmt), use_container_width=True, hide_index=True)
             # 🛈 ملاحظة توضيحية باللغتين
             st.markdown(
                 """
@@ -992,6 +995,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
