@@ -1145,67 +1145,107 @@ if is_aggregated:
             st.write("هنا سيتم عرض مقارنة مؤشرات الأداء الرئيسية بين الجهات...")
             # ضع كود الجداول والرسوم الخاصة بالمقارنات
 
-# =====================================================
-# مقارنة حسب الأبعاد (أعمدة DIM*)
-# =====================================================
-dim_cols = [c for c in df_view.columns if c.upper().startswith("DIM")]
+# =========================================================
+# تبويب الأدمن: مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
+# =========================================================
+if is_aggregated:
+    with tab_admin:
+        st.subheader("📊 مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)")
 
-if not dim_cols:
-    st.info("لا توجد أعمدة أبعاد (DIM..) للمقارنة حسب الأبعاد.")
-else:
-    st.markdown("### 🧩 مقارنة الجهات حسب الأبعاد")
+        if "ENTITY_NAME" not in df_view.columns:
+            st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
+        else:
+            # 1️⃣ اختيار أعمدة الأبعاد الرئيسية فقط: DIM1, DIM2, DIM3 ... (بدون Dim1.1, Dim2.3)
+            # الأعمدة في df_view مثل: Dim1, Dim1.1, Dim2, Dim2.1 ...
+            # نأخذ فقط ما يطابق: DIM + رقم بدون نقط
+            dim_cols = [
+                c for c in df_view.columns
+                if re.match(r"^DIM\d+$", c.upper())  # مثال: DIM1, DIM2, DIM10
+            ]
 
-    dim_rows = []
-    for ent, g in df_view.groupby("ENTITY_NAME"):
-        for dim_col in dim_cols:
-            val = series_to_percent(g[dim_col])
-            dim_rows.append({
-                "الجهة": ent,
-                "البعد": dim_col,
-                "النتيجة (%)": val
-            })
+            if not dim_cols:
+                st.info("لا توجد أعمدة أبعاد رئيسية (مثل Dim1, Dim2, ...) في البيانات.")
+            else:
+                # 2️⃣ جلب أسماء الأبعاد من جدول الأسئلة (إن وجد)
+                dim_labels = {}
+                qsheet_key = next((k for k in lookup_catalog.keys() if "QUESTION" in k), None)
+                if qsheet_key:
+                    qtbl = lookup_catalog[qsheet_key].copy()
+                    qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
 
-    dim_df = pd.DataFrame(dim_rows)
+                    code_col = next((c for c in qtbl.columns if "DIM" in c or "QUESTION" in c or "CODE" in c), None)
+                    ar_col   = next((c for c in qtbl.columns if "ARAB" in c), None)
 
-    if dim_df.empty:
-        st.info("لا توجد بيانات كافية للأبعاد.")
-    else:
-        # تقريب القيم
-        dim_df["النتيجة (%)"] = dim_df["النتيجة (%)"].round(1)
+                    if code_col and ar_col:
+                        for code, name in zip(qtbl[code_col].astype(str), qtbl[ar_col].astype(str)):
+                            dim_labels[code.strip().upper()] = name
 
-        # 📋 جدول الأبعاد
-        st.dataframe(
-            dim_df.sort_values(["البعد", "الجهة"]),
-            use_container_width=True,
-            hide_index=True
-        )
+                # 3️⃣ حساب النتيجة لكل (جهة × بُعد رئيسي)
+                rows = []
+                for ent, g in df_view.groupby("ENTITY_NAME"):
+                    for dim_col in dim_cols:
+                        score = series_to_percent(g[dim_col])
+                        rows.append({
+                            "الجهة": ent,
+                            "رمز البعد": dim_col,
+                            "اسم البعد": dim_labels.get(dim_col.strip().upper(), ""),
+                            "النتيجة (%)": round(score, 1) if pd.notna(score) else np.nan,
+                        })
 
-        # 🔥 Heatmap للمقارنة البصرية بين الجهات والأبعاد
-        pivot_dim = dim_df.pivot(index="البعد", columns="الجهة", values="النتيجة (%)")
+                dim_comp_df = pd.DataFrame(rows)
 
-        fig_heat = go.Figure(
-            data=go.Heatmap(
-                z=pivot_dim.values,
-                x=pivot_dim.columns,
-                y=pivot_dim.index,
-                zmin=0,
-                zmax=100,
-                colorbar=dict(title="النتيجة (%)")
-            )
-         )
-        fig_heat.update_layout(
-            title={
-                "text": "🌡️ خريطة حرارية لمقارنة الأبعاد بين الجهات",
-                "x": 0.5,
-                "y": 0.95,
-                "xanchor": "center",
-                "yanchor": "top"
-            },
-            xaxis_title="الجهة",
-            yaxis_title="البعد",
-            height=600
-        )
-        st.plotly_chart(fig_heat, use_container_width=True)            
+                if dim_comp_df.empty:
+                    st.info("لا توجد بيانات كافية لحساب نتائج الأبعاد.")
+                else:
+                    # 4️⃣ جدول الأبعاد الرئيسية
+                    st.markdown("### 📋 جدول مقارنة الأبعاد الرئيسية بين الجهات")
+                    st.dataframe(
+                        dim_comp_df.sort_values(["رمز البعد", "الجهة"]),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    # 5️⃣ اختيار بُعد رئيسي ورسم Bar Chart للمقارنة بين الجهات
+                    st.markdown("### 📊 الرسم البياني للمقارنة في بُعد رئيسي محدد")
+
+                    unique_dims = dim_comp_df["رمز البعد"].unique().tolist()
+
+                    def format_dim_label(d):
+                        subset = dim_comp_df[dim_comp_df["رمز البعد"] == d]
+                        names = subset["اسم البعد"].dropna().unique()
+                        if len(names) > 0 and names[0] != "":
+                            return f"{d} - {names[0]}"
+                        return d
+
+                    selected_dim = st.selectbox(
+                        "اختر البعد للمقارنة بين الجهات:",
+                        unique_dims,
+                        format_func=format_dim_label
+                    )
+
+                    plot_df = dim_comp_df[dim_comp_df["رمز البعد"] == selected_dim].sort_values(
+                        "النتيجة (%)", ascending=False
+                    )
+
+                    dim_name_candidates = plot_df["اسم البعد"].dropna().unique()
+                    dim_name = dim_name_candidates[0] if len(dim_name_candidates) > 0 and dim_name_candidates[0] != "" else selected_dim
+
+                    fig_dim = px.bar(
+                        plot_df,
+                        x="الجهة",
+                        y="النتيجة (%)",
+                        text="النتيجة (%)",
+                        title=f"مقارنة الجهات في البعد {selected_dim} - {dim_name}",
+                    )
+                    fig_dim.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                    fig_dim.update_layout(
+                        yaxis=dict(range=[0, 100]),
+                        xaxis_title="الجهة",
+                        yaxis_title="النتيجة (%)",
+                        xaxis_tickangle=-15
+                    )
+                    st.plotly_chart(fig_dim, use_container_width=True)
+
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -1215,6 +1255,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
