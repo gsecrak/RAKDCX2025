@@ -818,16 +818,25 @@ with tab_services:
                     return f"background-color:{color};color:black"
                 except:
                     return ""
+
+            # 📋 إعداد الـ format حسب الأعمدة المتوفرة
+            format_dict = {}
+            if "سعادة (%)" in summary.columns:
+                format_dict["سعادة (%)"] = "{:.1f}%"
+            if "قيمة (%)" in summary.columns:
+                format_dict["قيمة (%)"] = "{:.1f}%"
+            if "NPS (%)" in summary.columns:
+                format_dict["NPS (%)"] = "{:.1f}%"
+            if "عدد الردود" in summary.columns:
+                format_dict["عدد الردود"] = "{:,.0f}"
+
+            subset_cols = [c for c in ["سعادة (%)", "قيمة (%)"] if c in summary.columns]
+
             # 📋 عرض الجدول
             styled_table = (
                 summary.style
-                .format({
-                    "Happiness / سعادة (٪)": "{:.1f}%",
-                    "Value / قيمة (٪)": "{:.1f}%",
-                    "NPS / صافي نقاط الترويج (٪)": "{:.1f}%",
-                    "عدد الردود / Responses": "{:,.0f}"
-                })
-                .applymap(color_cells, subset=["Happiness / سعادة (٪)", "Value / قيمة (٪)"])
+                .format(format_dict)
+                .applymap(color_cells, subset=subset_cols)
             )
             st.dataframe(styled_table, use_container_width=True)
 
@@ -836,9 +845,9 @@ with tab_services:
                 """
                 **ℹ️ ملاحظة:**  
                 يتم عرض الخدمات التي تحتوي على **30 ردًا أو أكثر فقط** لضمان دقة النتائج.  
-                """,
                 """
             )
+
             # رسم مقارنة (سعادة/قيمة)
             if "سعادة (%)" in summary.columns or "قيمة (%)" in summary.columns:
                 melted = summary.melt(
@@ -875,9 +884,10 @@ with tab_services:
                         "xanchor": "center",
                         "yanchor": "top"
                     },
-                    title_font_size=20   # ← يمكنك تغييرها لـ 24 أو 20 حسب رغبتك
+                    title_font_size=20
                 )
                 st.plotly_chart(fig, use_container_width=True)
+
 
 # =========================================================
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
@@ -995,6 +1005,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
