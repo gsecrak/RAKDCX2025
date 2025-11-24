@@ -715,7 +715,7 @@ with tab_dimensions:
 
             st.plotly_chart(fig, use_container_width=True)
             # وسيلة الإيضاح ثنائية اللغة
-            st.markdown(bi_text(
+            st.markdown(
                 """
                 **🗂️ وسيلة الإيضاح:**
                 - 🔴 أقل من 70٪ — ضعيف الأداء  
@@ -723,7 +723,7 @@ with tab_dimensions:
                 - 🟢 من 80٪ إلى أقل من 90٪ — جيد  
                 - 🔵 90٪ فأكثر — ممتاز  
                 """,
-            ), unsafe_allow_html=True)
+            unsafe_allow_html=True)
             # عرض جدول الأبعاد
             st.dataframe(
                 dims[["Dimension", "Score"]]
@@ -968,6 +968,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
