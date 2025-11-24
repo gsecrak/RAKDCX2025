@@ -399,7 +399,7 @@ AR_DIST_TITLES = {
 # =========================================================
 if is_aggregated:
     # جهة الأدمن: نضيف تبويب المقارنات
-    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto, tab_compare = st.tabs([
+    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto, tab_admin = st.tabs([
         "📁 البيانات",
         "📈 توزيع العينة",
         "📊 المؤشرات",
@@ -1215,6 +1215,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
