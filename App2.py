@@ -18,40 +18,40 @@ from datetime import datetime
 from pathlib import Path
 USER_KEYS = {
     "بلدية رأس الخيمة": {
-        "password": "RAK-MUN!93vB#2025",
+        "password": st.secrets["users"]["MUN"],
         "role": "center",
-        "file": "MUN.csv",      # بيانات بلدية رأس الخيمة
+        "file": "MUN.csv"
     },
     "محاكم رأس الخيمة": {
-        "password": "RAK-CR!84zQ@2025",
+        "password": st.secrets["users"]["CR"],
         "role": "center",
-        "file": "CR.csv",       # بيانات المحاكم
+        "file": "CR.csv"
     },
     "النيابة العامة في رأس الخيمة": {
-        "password": "RAK-PR!77xL&2025",
+        "password": st.secrets["users"]["PR"],
         "role": "center",
-        "file": "PR.csv",       # بيانات النيابة العامة
+        "file": "PR.csv"
     },
     "دائرة التنمية الاقتصادية": {
-        "password": "RAK-DED!66pK*2025",
+        "password": st.secrets["users"]["DED"],
         "role": "center",
-        "file": "DED.csv",      # بيانات التنمية الاقتصادية
+        "file": "DED.csv"
     },
     "جمارك رأس الخيمة": {
-        "password": "RAK-CU!59tM%2025",
+        "password": st.secrets["users"]["CU"],
         "role": "center",
-        "file": "CU.csv",       # بيانات الجمارك
+        "file": "CU.csv"
     },
     "هيئة حماية البيئة والتنمية": {
-        "password": "RAK-EN!48rN^2025",
+        "password": st.secrets["users"]["EN"],
         "role": "center",
-        "file": "EN.csv",       # بيانات هيئة حماية البيئة
+        "file": "EN.csv"
     },
     "الأمانة العامة للمجلس التنفيذي": {
-        "password": "RAK-EC!99Adm@2025",
-        "role": "admin",        # نفس فكرة Executive Council (صلاحية أعلى)
-        "file": "Centers_Master.csv"  # عدّلها لاسم ملف الإدارة العامة عندك إن كان مختلفًا
-    },
+        "password": st.secrets["users"]["EC"],
+        "role": "admin",
+        "file": "Centers_Master.csv"   # غيّر الاسم إذا كان لديك ملف مختلف للإدارة العامة
+    }
 }
 # =========================================================
 # إعداد الصفحة + اتجاه RTL
@@ -1047,6 +1047,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
