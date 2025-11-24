@@ -1144,7 +1144,6 @@ if is_aggregated:
         else:
             st.write("هنا سيتم عرض مقارنة مؤشرات الأداء الرئيسية بين الجهات...")
             # ضع كود الجداول والرسوم الخاصة بالمقارنات
-
 # =========================================================
 # تبويب الأدمن: مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
 # =========================================================
@@ -1155,64 +1154,104 @@ if is_aggregated:
         if "ENTITY_NAME" not in df_view.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
-            # 1️⃣ اختيار أعمدة الأبعاد الرئيسية فقط: DIM1, DIM2, DIM3 ... (بدون Dim1.1, Dim2.3)
-            # الأعمدة في df_view مثل: Dim1, Dim1.1, Dim2, Dim2.1 ...
-            # نأخذ فقط ما يطابق: DIM + رقم بدون نقط
-            dim_cols = [
-                c for c in df_view.columns
-                if re.match(r"^DIM\d+$", c.upper())  # مثال: DIM1, DIM2, DIM10
-            ]
+            # 1️⃣ نبحث عن الأعمدة الفرعية للأبعاد DimX. (مثل Dim1.1 / Dim2.3)
+            dim_subcols = [c for c in df_view.columns if re.match(r"Dim\d+\.", str(c).strip())]
 
-            if not dim_cols:
-                st.info("لا توجد أعمدة أبعاد رئيسية (مثل Dim1, Dim2, ...) في البيانات.")
+            if not dim_subcols:
+                st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
             else:
-                # 2️⃣ جلب أسماء الأبعاد من جدول الأسئلة (إن وجد)
-                dim_labels = {}
-                qsheet_key = next((k for k in lookup_catalog.keys() if "QUESTION" in k), None)
-                if qsheet_key:
-                    qtbl = lookup_catalog[qsheet_key].copy()
-                    qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
+                # نستخرج أرقام الأبعاد الرئيسية الموجودة (1,2,3,...) من DimX.Y
+                main_ids = sorted({
+                    int(re.match(r"Dim(\d+)\.", str(c).strip()).group(1))
+                    for c in dim_subcols
+                    if re.match(r"Dim(\d+)\.", str(c).strip())
+                })
 
-                    code_col = next((c for c in qtbl.columns if "DIM" in c or "QUESTION" in c or "CODE" in c), None)
-                    ar_col   = next((c for c in qtbl.columns if "ARAB" in c), None)
-
-                    if code_col and ar_col:
-                        for code, name in zip(qtbl[code_col].astype(str), qtbl[ar_col].astype(str)):
-                            dim_labels[code.strip().upper()] = name
-
-                # 3️⃣ حساب النتيجة لكل (جهة × بُعد رئيسي)
+                # 2️⃣ حساب نتيجة كل بُعد رئيسي لكل جهة
                 rows = []
                 for ent, g in df_view.groupby("ENTITY_NAME"):
-                    for dim_col in dim_cols:
-                        score = series_to_percent(g[dim_col])
+                    for i in main_ids:
+                        # كل الأعمدة الفرعية التي تبدأ بـ Dim{i}.
+                        sub = [c for c in g.columns if str(c).startswith(f"Dim{i}.")]
+                        if not sub:
+                            continue
+
+                        # متوسط الأسئلة الفرعية لهذا البعد
+                        dim_series = g[sub].apply(pd.to_numeric, errors="coerce").mean(axis=1)
+                        score = series_to_percent(dim_series)
+
                         rows.append({
                             "الجهة": ent,
-                            "رمز البعد": dim_col,
-                            "اسم البعد": dim_labels.get(dim_col.strip().upper(), ""),
-                            "النتيجة (%)": round(score, 1) if pd.notna(score) else np.nan,
+                            "Dimension": f"Dim{i}",
+                            "Score": score
                         })
 
-                dim_comp_df = pd.DataFrame(rows)
+                dim_comp_df = pd.DataFrame(rows).dropna(subset=["Score"])
 
                 if dim_comp_df.empty:
-                    st.info("لا توجد بيانات كافية لحساب نتائج الأبعاد.")
+                    st.info("لا توجد نتائج كافية لحساب الأبعاد لكل جهة.")
                 else:
-                    # 4️⃣ جدول الأبعاد الرئيسية
+                    # 3️⃣ استبدال أسماء الأبعاد من ورقة Questions (نفس منطق تبويب الأبعاد)
+                    for sheet_name in lookup_catalog.keys():
+                        if "QUESTION" in sheet_name.upper():  # Question / Questions
+                            qtbl = lookup_catalog[sheet_name].copy()
+                            qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
+
+                            code_col = next(
+                                (c for c in qtbl.columns if any(k in c for k in ["DIM", "CODE", "QUESTION", "ID"])),
+                                None
+                            )
+                            name_col = next(
+                                (c for c in qtbl.columns if any(k in c for k in ["ARABIC", "NAME", "LABEL", "TEXT"])),
+                                None
+                            )
+
+                            if code_col and name_col:
+                                def _norm(s):
+                                    return s.astype(str).str.upper().str.replace(r"\s+", "", regex=True)
+
+                                code_series = _norm(qtbl[code_col])
+                                name_series = qtbl[name_col].astype(str)
+                                map_dict = dict(zip(code_series, name_series))
+
+                                dim_comp_df["Dimension_label"] = (
+                                    _norm(dim_comp_df["Dimension"])
+                                    .map(map_dict)
+                                    .fillna(dim_comp_df["Dimension"])
+                                )
+                            else:
+                                dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
+
+                            break
+                    else:
+                        # لو ما لقينا ورقة Questions
+                        dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
+
+                    # تقريب النسب
+                    dim_comp_df["Score"] = dim_comp_df["Score"].round(1)
+
+                    # 4️⃣ عرض جدول المقارنات
                     st.markdown("### 📋 جدول مقارنة الأبعاد الرئيسية بين الجهات")
                     st.dataframe(
-                        dim_comp_df.sort_values(["رمز البعد", "الجهة"]),
+                        dim_comp_df[["Dimension", "Dimension_label", "الجهة", "Score"]]
+                        .rename(columns={
+                            "Dimension": "رمز البعد",
+                            "Dimension_label": "اسم البعد",
+                            "Score": "النسبة (%)"
+                        })
+                        .style.format({"النسبة (%)": "{:.1f}%"}),
                         use_container_width=True,
                         hide_index=True
                     )
 
                     # 5️⃣ اختيار بُعد رئيسي ورسم Bar Chart للمقارنة بين الجهات
-                    st.markdown("### 📊 الرسم البياني للمقارنة في بُعد رئيسي محدد")
+                    st.markdown("### 📊 الرسم البياني لمقارنة الجهات في بُعد محدد")
 
-                    unique_dims = dim_comp_df["رمز البعد"].unique().tolist()
+                    unique_dims = dim_comp_df["Dimension"].unique().tolist()
 
                     def format_dim_label(d):
-                        subset = dim_comp_df[dim_comp_df["رمز البعد"] == d]
-                        names = subset["اسم البعد"].dropna().unique()
+                        subset = dim_comp_df[dim_comp_df["Dimension"] == d]
+                        names = subset["Dimension_label"].dropna().unique()
                         if len(names) > 0 and names[0] != "":
                             return f"{d} - {names[0]}"
                         return d
@@ -1223,18 +1262,18 @@ if is_aggregated:
                         format_func=format_dim_label
                     )
 
-                    plot_df = dim_comp_df[dim_comp_df["رمز البعد"] == selected_dim].sort_values(
-                        "النتيجة (%)", ascending=False
+                    plot_df = dim_comp_df[dim_comp_df["Dimension"] == selected_dim].sort_values(
+                        "Score", ascending=False
                     )
 
-                    dim_name_candidates = plot_df["اسم البعد"].dropna().unique()
+                    dim_name_candidates = plot_df["Dimension_label"].dropna().unique()
                     dim_name = dim_name_candidates[0] if len(dim_name_candidates) > 0 and dim_name_candidates[0] != "" else selected_dim
 
                     fig_dim = px.bar(
                         plot_df,
                         x="الجهة",
-                        y="النتيجة (%)",
-                        text="النتيجة (%)",
+                        y="Score",
+                        text="Score",
                         title=f"مقارنة الجهات في البعد {selected_dim} - {dim_name}",
                     )
                     fig_dim.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
@@ -1245,7 +1284,6 @@ if is_aggregated:
                         xaxis_tickangle=-15
                     )
                     st.plotly_chart(fig_dim, use_container_width=True)
-
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -1255,6 +1293,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
