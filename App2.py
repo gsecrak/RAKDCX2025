@@ -1134,7 +1134,7 @@ if is_aggregated:
                     )
                     st.plotly_chart(fig_kpi, use_container_width=True)
 if is_aggregated:
-    with tab_compare:
+    with tab_admin:
         st.subheader("📊 المقارنات بين الجهات")
 
         # هنا تضع منطق المقارنات في KPIs والأبعاد
@@ -1215,6 +1215,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
