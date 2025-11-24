@@ -56,7 +56,7 @@ USER_KEYS = {
 # =========================================================
 # إعداد الصفحة + اتجاه RTL
 # =========================================================
-st.set_page_config(page_title="لوحة تجربة المتعاملين — نسخة عربية", layout="wide")
+st.set_page_config(page_title="تقرير تجربة المتعامل في الخدمات الرقمية 2025", layout="wide")
 PASTEL = px.colors.qualitative.Pastel
 
 # شعار أعلى الصفحة (استبدل بالرابط المناسب إذا رغبت)
@@ -1279,6 +1279,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
