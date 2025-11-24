@@ -1230,7 +1230,7 @@ if is_aggregated:
                     # تقريب النسب
                     dim_comp_df["Score"] = dim_comp_df["Score"].round(1)
 
-                    # 4️⃣ عرض جدول المقارنات
+                                     # 4️⃣ عرض جدول المقارنات
                     st.markdown("### 📋 جدول مقارنة الأبعاد الرئيسية بين الجهات")
                     st.dataframe(
                         dim_comp_df[["Dimension", "Dimension_label", "الجهة", "Score"]]
@@ -1244,46 +1244,32 @@ if is_aggregated:
                         hide_index=True
                     )
 
-                    # 5️⃣ اختيار بُعد رئيسي ورسم Bar Chart للمقارنة بين الجهات
-                    st.markdown("### 📊 الرسم البياني لمقارنة الجهات في بُعد محدد")
+                    # 5️⃣ رسم جميع الأبعاد مرة واحدة (لكل الجهات)
+                    st.markdown("### 📊 مقارنة جميع الأبعاد بين الجهات")
 
-                    unique_dims = dim_comp_df["Dimension"].unique().tolist()
+                    # نرتب الأبعاد بالترتيب الرقمي Dim1, Dim2, ...
+                    dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
+                    dim_comp_df_sorted = dim_comp_df.sort_values(["Order", "الجهة"])
 
-                    def format_dim_label(d):
-                        subset = dim_comp_df[dim_comp_df["Dimension"] == d]
-                        names = subset["Dimension_label"].dropna().unique()
-                        if len(names) > 0 and names[0] != "":
-                            return f"{d} - {names[0]}"
-                        return d
-
-                    selected_dim = st.selectbox(
-                        "اختر البعد للمقارنة بين الجهات:",
-                        unique_dims,
-                        format_func=format_dim_label
-                    )
-
-                    plot_df = dim_comp_df[dim_comp_df["Dimension"] == selected_dim].sort_values(
-                        "Score", ascending=False
-                    )
-
-                    dim_name_candidates = plot_df["Dimension_label"].dropna().unique()
-                    dim_name = dim_name_candidates[0] if len(dim_name_candidates) > 0 and dim_name_candidates[0] != "" else selected_dim
-
-                    fig_dim = px.bar(
-                        plot_df,
-                        x="الجهة",
+                    fig_all = px.bar(
+                        dim_comp_df_sorted,
+                        x="Dimension_label",
                         y="Score",
+                        color="الجهة",
+                        barmode="group",
                         text="Score",
-                        title=f"مقارنة الجهات في البعد {selected_dim} - {dim_name}",
+                        title="مقارنة الجهات في جميع الأبعاد الرئيسية"
                     )
-                    fig_dim.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-                    fig_dim.update_layout(
-                        yaxis=dict(range=[0, 100]),
-                        xaxis_title="الجهة",
+                    fig_all.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                    fig_all.update_layout(
+                        xaxis_title="البعد",
                         yaxis_title="النتيجة (%)",
-                        xaxis_tickangle=-15
+                        yaxis=dict(range=[0, 100]),
+                        xaxis_tickangle=-20,
+                        legend=dict(orientation="h", y=-0.25)
                     )
-                    st.plotly_chart(fig_dim, use_container_width=True)
+                    st.plotly_chart(fig_all, use_container_width=True)
+
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -1293,6 +1279,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
