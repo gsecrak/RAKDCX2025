@@ -263,9 +263,11 @@ st.sidebar.title("اختيار الجهة")
 selected_entity = st.sidebar.selectbox("الرجاء اختيار الجهة:", list(ENTITIES.keys()))
 
 # إعداد إعدادات الجهة المختارة
-entity_conf = ENTITIES[selected_entity]
-correct_password = entity_conf["password"]
-is_aggregated = entity_conf.get("aggregated", False)
+entity_conf = ENTITIES[selected_entity]       # هنا نأخذ ملفات الجهة (csv/xlsx)
+user_conf   = USER_KEYS[selected_entity]      # وهنا نأخذ كلمة السر والدور
+
+correct_password = user_conf["password"]      # ← من USER_KEYS
+is_aggregated    = entity_conf.get("aggregated", False)
 
 # إدخال كلمة المرور
 password_input = st.sidebar.text_input(
@@ -1047,6 +1049,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
