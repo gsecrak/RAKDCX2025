@@ -606,7 +606,6 @@ with tab_kpis:
     # =========================================================
     # 🎨 وسيلتا الإيضاح (Legends)
     # =========================================================
-    if lang == "العربية":
         legend_html = """
         <div style='background-color:#f9f9f9;border:1px solid #ddd;border-radius:10px;padding:12px;margin-top:15px;'>
           <h4 style='margin-bottom:8px;'>🎨 وسيلة الإيضاح — السعادة / القيمة</h4>
@@ -622,24 +621,6 @@ with tab_kpis:
           🟡 من 0 إلى أقل من 30 — ضعيف (رضا محدود)<br>
           🟢 من 30 إلى أقل من 60 — جيد (رضا عام)<br>
           🔵 60 فأكثر — ممتاز (ولاء مرتفع جدًا)
-        </div>
-        """
-    else:
-        legend_html = """
-        <div style='background-color:#f9f9f9;border:1px solid #ddd;border-radius:10px;padding:12px;margin-top:15px;'>
-          <h4 style='margin-bottom:8px;'>🎨 Legend — Happiness / Value</h4>
-          🔴 Below 70% — Very Poor<br>
-          🟡 70–80% — Needs Improvement<br>
-          🟢 80–90% — Good<br>
-          🔵 90%+ — Excellent
-        </div>
-
-        <div style='background-color:#f9f9f9;border:1px solid #ddd;border-radius:10px;padding:12px;margin-top:10px;'>
-          <h4 style='margin-bottom:8px;'>🎯 Legend — NPS (Net Promoter Score)</h4>
-          🔴 Below 0 — Very Poor (More detractors than promoters)<br>
-          🟡 0–30 — Fair (Limited satisfaction)<br>
-          🟢 30–60 — Good (Majority satisfied)<br>
-          🔵 60+ — Excellent (Strong loyalty)
         </div>
         """
     st.markdown(legend_html, unsafe_allow_html=True)
@@ -979,6 +960,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
