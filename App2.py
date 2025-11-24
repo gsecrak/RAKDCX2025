@@ -397,15 +397,27 @@ AR_DIST_TITLES = {
 # =========================================================
 # التبويبات
 # =========================================================
-tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.tabs([
-    "📁 البيانات",
-    "📈 توزيع العينة",
-    "📊 المؤشرات",
-    "🧩 الأبعاد",
-    "📋 الخدمات",
-    "💬 المزعجات"
-])
-
+if is_aggregated:
+    # جهة الأدمن: نضيف تبويب المقارنات
+    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto, tab_compare = st.tabs([
+        "📁 البيانات",
+        "📈 توزيع العينة",
+        "📊 المؤشرات",
+        "🧩 الأبعاد",
+        "📋 الخدمات",
+        "💬 المزعجات",
+        "📊 المقارنات بين الجهات"
+    ])
+else:
+    # باقي الجهات: بدون تبويب المقارنات
+    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.tabs([
+        "📁 البيانات",
+        "📈 توزيع العينة",
+        "📊 المؤشرات",
+        "🧩 الأبعاد",
+        "📋 الخدمات",
+        "💬 المزعجات"
+    ])
 # =========================================================
 # تبويب البيانات + تنزيل
 # =========================================================
@@ -1039,7 +1051,149 @@ with tab_pareto:
                 file_name=f"Pareto_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-            
+# =========================================================
+# تبويب خاص للأمانة العامة: مقارنة الجهات في مؤشرات الأداء والأبعاد
+# =========================================================
+if is_aggregated:
+    with tab_admin:
+        st.subheader("📊 مقارنة الجهات في مؤشرات الأداء الرئيسية والأبعاد")
+
+        # تأكد أن عمود اسم الجهة موجود
+        if "ENTITY_NAME" not in df_view.columns:
+            st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
+        else:
+            # كشف أعمدة المقاييس (CSAT / CES / NPS) تلقائياً
+            csat_col, ces_col, nps_col = autodetect_metric_cols(df_view)
+
+            work = df_view.copy()
+
+            # 🔹 تجميع مؤشرات الأداء الرئيسية لكل جهة
+            rows = []
+            for ent, g in work.groupby("ENTITY_NAME"):
+                row = {"الجهة": ent, "عدد الردود": len(g)}
+
+                if csat_col:
+                    row["سعادة (%)"] = series_to_percent(g[csat_col])
+                if ces_col:
+                    row["قيمة (%)"] = series_to_percent(g[ces_col])
+
+                nps_val, _, _, _, _ = detect_nps(g)
+                row["NPS (%)"] = nps_val
+
+                rows.append(row)
+
+            kpi_df = pd.DataFrame(rows)
+
+            if kpi_df.empty:
+                st.info("لا توجد بيانات كافية لحساب مؤشرات الأداء الرئيسية.")
+            else:
+                # 📋 عرض الجدول مع تنسيقات بسيطة
+                kpi_display = kpi_df.copy()
+                for c in ["سعادة (%)", "قيمة (%)", "NPS (%)"]:
+                    if c in kpi_display.columns:
+                        kpi_display[c] = kpi_display[c].round(1)
+
+                st.markdown("### 🔍 مقارنة مؤشرات الأداء الرئيسية حسب الجهة")
+                st.dataframe(
+                    kpi_display.style.format({
+                        "سعادة (%)": "{:.1f}%",
+                        "قيمة (%)": "{:.1f}%",
+                        "NPS (%)": "{:.1f}%",
+                        "عدد الردود": "{:,.0f}"
+                    }),
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+                # 📊 رسم مقارنة سعادة/قيمة/NPS حسب الجهة
+                metric_cols = [c for c in ["سعادة (%)", "قيمة (%)", "NPS (%)"] if c in kpi_df.columns]
+                if metric_cols:
+                    melted_kpi = kpi_df.melt(
+                        id_vars=["الجهة"],
+                        value_vars=metric_cols,
+                        var_name="المؤشر",
+                        value_name="القيمة"
+                    )
+
+                    fig_kpi = px.bar(
+                        melted_kpi,
+                        x="الجهة",
+                        y="القيمة",
+                        color="المؤشر",
+                        barmode="group",
+                        text="القيمة",
+                        title="مقارنة مؤشرات الأداء الرئيسية حسب الجهة"
+                    )
+                    fig_kpi.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
+                    fig_kpi.update_layout(
+                        yaxis=dict(range=[0, 100]),
+                        xaxis_title="الجهة",
+                        yaxis_title="النسبة (%)",
+                        legend=dict(orientation="h", y=-0.2)
+                    )
+                    st.plotly_chart(fig_kpi, use_container_width=True)
+
+# =====================================================
+# مقارنة حسب الأبعاد (أعمدة DIM*)
+# =====================================================
+dim_cols = [c for c in df_view.columns if c.upper().startswith("DIM")]
+
+if not dim_cols:
+    st.info("لا توجد أعمدة أبعاد (DIM..) للمقارنة حسب الأبعاد.")
+else:
+    st.markdown("### 🧩 مقارنة الجهات حسب الأبعاد")
+
+    dim_rows = []
+    for ent, g in df_view.groupby("ENTITY_NAME"):
+        for dim_col in dim_cols:
+            val = series_to_percent(g[dim_col])
+            dim_rows.append({
+                "الجهة": ent,
+                "البعد": dim_col,
+                "النتيجة (%)": val
+            })
+
+    dim_df = pd.DataFrame(dim_rows)
+
+    if dim_df.empty:
+        st.info("لا توجد بيانات كافية للأبعاد.")
+    else:
+        # تقريب القيم
+        dim_df["النتيجة (%)"] = dim_df["النتيجة (%)"].round(1)
+
+        # 📋 جدول الأبعاد
+        st.dataframe(
+            dim_df.sort_values(["البعد", "الجهة"]),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # 🔥 Heatmap للمقارنة البصرية بين الجهات والأبعاد
+        pivot_dim = dim_df.pivot(index="البعد", columns="الجهة", values="النتيجة (%)")
+
+        fig_heat = go.Figure(
+            data=go.Heatmap(
+                z=pivot_dim.values,
+                x=pivot_dim.columns,
+                y=pivot_dim.index,
+                zmin=0,
+                zmax=100,
+                colorbar=dict(title="النتيجة (%)")
+            )
+         )
+        fig_heat.update_layout(
+            title={
+                "text": "🌡️ خريطة حرارية لمقارنة الأبعاد بين الجهات",
+                "x": 0.5,
+                "y": 0.95,
+                "xanchor": "center",
+                "yanchor": "top"
+            },
+            xaxis_title="الجهة",
+            yaxis_title="البعد",
+            height=600
+        )
+        st.plotly_chart(fig_heat, use_container_width=True)            
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -1049,6 +1203,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
