@@ -802,7 +802,24 @@ with tab_services:
             sort_key = "سعادة (%)" if "سعادة (%)" in summary.columns else ("قيمة (%)" if "قيمة (%)" in summary.columns else None)
             if sort_key:
                 summary = summary.sort_values(sort_key, ascending=False)
+            # 🧭 ترتيب الجدول تنازليًا حسب السعادة
+            summary = summary.sort_values("Happiness / سعادة (٪)", ascending=False)
 
+            # ✅ تلوين الخلايا في الجدول (السعادة والقيمة فقط)
+            def color_cells(val):
+                try:
+                    v = float(val)
+                    if v < 70:
+                        color = "#FF6B6B"  # أحمر
+                    elif v < 80:
+                        color = "#FFD93D"  # أصفر
+                    elif v < 90:
+                        color = "#6BCB77"  # أخضر
+                    else:
+                        color = "#4D96FF"  # أزرق
+                    return f"background-color:{color};color:black"
+                except:
+                    return ""
             # عرض الجدول
             fmt = {}
             if "سعادة (%)" in summary.columns: fmt["سعادة (%)"] = "{:.1f}%"
@@ -811,7 +828,14 @@ with tab_services:
             if "عدد الردود" in summary.columns: fmt["عدد الردود"] = "{:,.0f}"
 
             st.dataframe(summary.style.format(fmt), use_container_width=True, hide_index=True)
-
+            # 🛈 ملاحظة توضيحية باللغتين
+            st.markdown(
+                """
+                **ℹ️ ملاحظة:**  
+                يتم عرض الخدمات التي تحتوي على **30 ردًا أو أكثر فقط** لضمان دقة النتائج.  
+                """,
+                """
+            )
             # رسم مقارنة (سعادة/قيمة)
             if "سعادة (%)" in summary.columns or "قيمة (%)" in summary.columns:
                 melted = summary.melt(
@@ -968,6 +992,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
