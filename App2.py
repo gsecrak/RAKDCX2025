@@ -128,7 +128,7 @@ ENTITIES = {
     "الأمانة العامة للمجلس التنفيذي": {
         "csv": "Centers_Master.csv",         # لن نستخدمها
         "xlsx": "Data_tables_MASTER.xlsx",        # لن نستخدمها
-        "aggregated": True,  # علامة أنها جهة تجميع
+        #"aggregated": True,  # علامة أنها جهة تجميع
     },
 }
 
@@ -1279,6 +1279,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
