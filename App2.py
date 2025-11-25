@@ -33,9 +33,9 @@ USER_KEYS = {
         "file": "PR.csv"
     },
     "دائرة التنمية الاقتصادية": {
-        "password": st.secrets["users"]["DED"],
+        "password": st.secrets["users"]["EC"],
         "role": "center",
-        "file": "DED.csv"
+        "file": "EC.csv"
     },
     "جمارك رأس الخيمة": {
         "password": st.secrets["users"]["CU"],
@@ -48,7 +48,7 @@ USER_KEYS = {
         "file": "EN.csv"
     },
     "الأمانة العامة للمجلس التنفيذي": {
-        "password": st.secrets["users"]["EC"],
+        "password": st.secrets["users"]["GS"],
         "role": "admin",
         "file": "Centers_Master.csv"   # غيّر الاسم إذا كان لديك ملف مختلف للإدارة العامة
     }
@@ -113,7 +113,7 @@ ENTITIES = {
         "xlsx": "Data_tables_PR.xlsx",
     },
     "دائرة التنمية الاقتصادية": {
-        "csv": "DED.csv",
+        "csv": "EC.csv",
         "xlsx": "Data_tables_EC.xlsx",
     },
     "جمارك رأس الخيمة": {
@@ -1279,6 +1279,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
