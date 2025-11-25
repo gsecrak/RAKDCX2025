@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Arabic CX Dashboard (3 Dimensions) — Streamlit
 # Files expected in the same folder:
-#   - MUN.csv                          ← raw survey data
+#   - MN.csv                          ← raw survey data
 #   - Digital_Data_tables.xlsx         ← lookup/metadata tables
 #
 # Run:
@@ -18,9 +18,9 @@ from datetime import datetime
 from pathlib import Path
 USER_KEYS = {
     "بلدية رأس الخيمة": {
-        "password": st.secrets["users"]["MUN"],
+        "password": st.secrets["users"]["MN"],
         "role": "center",
-        "file": "MUN.csv"
+        "file": "MN.csv"
     },
     "محاكم رأس الخيمة": {
         "password": st.secrets["users"]["CR"],
@@ -101,7 +101,7 @@ st.markdown("""
 # قاموس الجهات والملفات
 ENTITIES = {
     "بلدية رأس الخيمة": {
-        "csv": "MUN.csv",
+        "csv": "MN.csv",
         "xlsx": "Data_tables_MN.xlsx",
     },
     "محاكم رأس الخيمة": {
@@ -1279,6 +1279,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
