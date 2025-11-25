@@ -1235,7 +1235,7 @@ if is_admin:
                     st.markdown(
                         """
                         <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
-                        📋 جدول مقارنة الأبعاد الرئيسية بين الجهات
+                        📋 مقارنة الأبعاد الرئيسية بين الجهات
                         </h3>
                         """,
                         unsafe_allow_html=True
@@ -1253,17 +1253,6 @@ if is_admin:
                         use_container_width=True,
                         hide_index=True
                     )
-
-                    # 5️⃣ عنوان الرسم (وسط / 22 / عريض داخل الرسم)
-                    st.markdown(
-                        """
-                        <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
-                        📊 مقارنة جميع الأبعاد بين الجهات
-                        </h3>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
                     # نرتب الأبعاد بالترتيب الرقمي Dim1, Dim2, ...
                     dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
                     dim_comp_df_sorted = dim_comp_df.sort_values(["Order", "الجهة"])
@@ -1302,3 +1291,4 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
