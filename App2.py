@@ -747,7 +747,7 @@ with tab_dimensions:
             fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
             fig.update_layout(
                 title={
-                    'text': "<span style='font-size:22px; font-weight:bold;'>📊 تحليل متوسط الأبعاد</span>",
+                    'text': "<span style='font-size:22px; font-weight:bold;'>تحليل متوسط الأبعاد 📊</span>",
                     'x': 0.5,  # المنتصف
                     'xanchor': 'center'
                 },
@@ -921,7 +921,7 @@ with tab_services:
                 # 🔥 تكبير العنوان + توسيطه
                 fig.update_layout(
                     title={
-                        "text": "📊 مقارنة مؤشري السعادة والرضا عن الرسوم حسب الخدمة",
+                        "text": "مقارنة مؤشري السعادة والرضا عن الرسوم حسب الخدمة 📊",
                         "x": 0.5,
                         "y": 0.95,
                         "xanchor": "center",
@@ -1291,5 +1291,6 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
