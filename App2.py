@@ -128,7 +128,6 @@ ENTITIES = {
     "الأمانة العامة للمجلس التنفيذي": {
         "csv": "Centers_Master.csv",         # لن نستخدمها
         "xlsx": "Data_tables_MASTER.xlsx",        # لن نستخدمها
-        #"aggregated": True,  # علامة أنها جهة تجميع
     },
 }
 
@@ -267,7 +266,7 @@ entity_conf = ENTITIES[selected_entity]       # هنا نأخذ ملفات ال�
 user_conf   = USER_KEYS[selected_entity]      # وهنا نأخذ كلمة السر والدور
 
 correct_password = user_conf["password"]      # ← من USER_KEYS
-is_aggregated    = entity_conf.get("aggregated", False)
+is_admin = (user_conf.get("role") == "admin")
 
 # إدخال كلمة المرور
 password_input = st.sidebar.text_input(
@@ -285,7 +284,7 @@ elif password_input != correct_password:
     st.stop()
 else:
     # بعد التحقق من كلمة المرور
-    if is_aggregated:
+    if is_admin:
         # جهة الأدمن: تحميل كل الجهات معًا
         df, lookup_catalog = load_all_entities()
     else:
@@ -397,7 +396,7 @@ AR_DIST_TITLES = {
 # =========================================================
 # التبويبات
 # =========================================================
-if is_aggregated:
+if is_admin:
     # جهة الأدمن: نضيف تبويب المقارنات
     tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto, tab_admin = st.tabs([
         "📁 البيانات",
@@ -1055,7 +1054,7 @@ with tab_pareto:
 # =========================================================
 # تبويب خاص للأمانة العامة: مقارنة الجهات في مؤشرات الأداء والأبعاد
 # =========================================================
-if is_aggregated:
+if is_admin:
     with tab_admin:
         st.subheader("📊 مقارنة الجهات في مؤشرات الأداء الرئيسية والأبعاد")
 
@@ -1133,7 +1132,7 @@ if is_aggregated:
                         legend=dict(orientation="h", y=-0.2)
                     )
                     st.plotly_chart(fig_kpi, use_container_width=True)
-if is_aggregated:
+if is_admin:
     with tab_admin:
         st.subheader("📊 المقارنات بين الجهات")
 
@@ -1147,7 +1146,7 @@ if is_aggregated:
 # =========================================================
 # تبويب الأدمن: مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
 # =========================================================
-if is_aggregated:
+if is_admin:
     with tab_admin:
         st.subheader("📊 مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)")
 
@@ -1279,6 +1278,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
