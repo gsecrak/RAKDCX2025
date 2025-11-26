@@ -651,7 +651,7 @@ with tab_kpis:
     # =========================================================
     legend_html = """
     <div style='background-color:#f9f9f9;border:1px solid #ddd;border-radius:10px;padding:12px;margin-top:15px;'>
-        <h4 style='margin-bottom:8px;'>🎨 وسيلة الإيضاح — السعادة / الرضا عن الرسوم</h4>
+        <h4 style='margin-bottom:8px;'>🎨 وسيلة الإيضاح — السعادة العامة / الرضا عن الرسوم</h4>
         🔴 أقل من 70٪ — ضعيف جدًا<br>
         🟡 من 70 إلى أقل من 80٪ — بحاجة إلى تحسين<br>
         🟢 من 80 إلى أقل من 90٪ — جيد<br>
@@ -787,7 +787,7 @@ with tab_services:
         csat_col, Fees_col, _ = autodetect_metric_cols(df_view)
         work = df_view.copy()
         if csat_col:
-            work["السعادة (%)"] = (pd.to_numeric(work[csat_col], errors="coerce") - 1) * 25
+            work["السعادة العامة (%)"] = (pd.to_numeric(work[csat_col], errors="coerce") - 1) * 25
         if Fees_col:
             work["الرضا عن الرسوم (%)"] = (pd.to_numeric(work[Fees_col], errors="coerce") - 1) * 25
 
@@ -812,7 +812,7 @@ with tab_services:
 
         # حساب المتوسط وعدد الردود
         agg_dict = {}
-        if "السعادة (%)" in work.columns: agg_dict["السعادة (%)"] = "mean"
+        if "السعادة العامة (%)" in work.columns: agg_dict["السعادة العامة (%)"] = "mean"
         if "الرضا عن الرسوم (%)" in work.columns:  agg_dict["الرضا عن الرسوم (%)"]  = "mean"
         if csat_col:                   agg_dict[csat_col]    = "count"
 
@@ -842,11 +842,11 @@ with tab_services:
                 summary = summary[summary["عدد الردود"] >= 30]
 
             # ترتيب
-            sort_key = "السعادة (%)" if "السعادة (%)" in summary.columns else ("الرضا عن الرسوم (%)" if "الرضا عن الرسوم (%)" in summary.columns else None)
+            sort_key = "السعادة العامة (%)" if "السعادة العامة (%)" in summary.columns else ("الرضا عن الرسوم (%)" if "الرضا عن الرسوم (%)" in summary.columns else None)
             if sort_key:
                 summary = summary.sort_values(sort_key, ascending=False)
 
-            # ✅ تلوين الخلايا في الجدول (السعادة والرضا عن الرسوم فقط)
+            # ✅ تلوين الخلايا في الجدول (السعادة العامة والرضا عن الرسوم فقط)
             def color_cells(val):
                 try:
                     v = float(val)
@@ -864,8 +864,8 @@ with tab_services:
 
             # 📋 إعداد الـ format حسب الأعمدة المتوفرة
             format_dict = {}
-            if "السعادة (%)" in summary.columns:
-                format_dict["السعادة (%)"] = "{:.1f}%"
+            if "السعادة العامة (%)" in summary.columns:
+                format_dict["السعادة العامة (%)"] = "{:.1f}%"
             if "الرضا عن الرسوم (%)" in summary.columns:
                 format_dict["الرضا عن الرسوم (%)"] = "{:.1f}%"
             if "NPS (%)" in summary.columns:
@@ -873,7 +873,7 @@ with tab_services:
             if "عدد الردود" in summary.columns:
                 format_dict["عدد الردود"] = "{:,.0f}"
 
-            subset_cols = [c for c in ["السعادة (%)", "الرضا عن الرسوم (%)"] if c in summary.columns]
+            subset_cols = [c for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)"] if c in summary.columns]
 
             # 📋 عرض الجدول
             styled_table = (
@@ -891,11 +891,11 @@ with tab_services:
                 """
             )
 
-            # رسم مقارنة (السعادة/الرضا عن الرسوم)
-            if "السعادة (%)" in summary.columns or "الرضا عن الرسوم (%)" in summary.columns:
+            # رسم مقارنة (السعادة العامة/الرضا عن الرسوم)
+            if "السعادة العامة (%)" in summary.columns or "الرضا عن الرسوم (%)" in summary.columns:
                 melted = summary.melt(
                     id_vars=["SERVICE"],
-                    value_vars=[v for v in ["السعادة (%)", "الرضا عن الرسوم (%)"] if v in summary.columns],
+                    value_vars=[v for v in ["السعادة العامة (%)", "الرضا عن الرسوم (%)"] if v in summary.columns],
                     var_name="المؤشر",
                     value_name="الرضا عن الرسوم"
                 )
@@ -908,7 +908,7 @@ with tab_services:
                     barmode="group",
                     text="الرضا عن الرسوم",
                     color_discrete_sequence=PASTEL,
-                    title="مقارنة مؤشري السعادة والرضا عن الرسوم حسب الخدمة"
+                    title="مقارنة مؤشري السعادة العامة والرضا عن الرسوم حسب الخدمة"
                 )
                 fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
 
@@ -921,7 +921,7 @@ with tab_services:
                 # 🔥 تكبير العنوان + توسيطه
                 fig.update_layout(
                     title={
-                        "text": "مقارنة مؤشري السعادة والرضا عن الرسوم حسب الخدمة 📊",
+                        "text": "مقارنة مؤشري السعادة العامة والرضا عن الرسوم حسب الخدمة 📊",
                         "x": 0.5,
                         "y": 0.95,
                         "xanchor": "center",
@@ -1074,7 +1074,7 @@ if is_admin:
                 row = {"الجهة": ent, "عدد الردود": len(g)}
 
                 if csat_col:
-                    row["السعادة (%)"] = series_to_percent(g[csat_col])
+                    row["السعادة العامة (%)"] = series_to_percent(g[csat_col])
                 if Fees_col:
                     row["الرضا عن الرسوم (%)"] = series_to_percent(g[Fees_col])
 
@@ -1100,13 +1100,13 @@ if is_admin:
 
                 # 📋 عرض الجدول مع تنسيقات بسيطة
                 kpi_display = kpi_df.copy()
-                for c in ["السعادة (%)", "الرضا عن الرسوم (%)", "NPS (%)"]:
+                for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"]:
                     if c in kpi_display.columns:
                         kpi_display[c] = kpi_display[c].round(1)
 
                 st.dataframe(
                     kpi_display.style.format({
-                        "السعادة (%)": "{:.1f}%",
+                        "السعادة العامة (%)": "{:.1f}%",
                         "الرضا عن الرسوم (%)": "{:.1f}%",
                         "NPS (%)": "{:.1f}%",
                         "عدد الردود": "{:,.0f}"
@@ -1115,8 +1115,8 @@ if is_admin:
                     hide_index=True
                 )
 
-                # 📊 رسم مقارنة السعادة/الرضا عن الرسوم/NPS حسب الجهة
-                metric_cols = [c for c in ["السعادة (%)", "الرضا عن الرسوم (%)", "NPS (%)"] if c in kpi_df.columns]
+                # 📊 رسم مقارنة السعادة العامة/الرضا عن الرسوم/NPS حسب الجهة
+                metric_cols = [c for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"] if c in kpi_df.columns]
                 if metric_cols:
                     melted_kpi = kpi_df.melt(
                         id_vars=["الجهة"],
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
