@@ -257,7 +257,27 @@ def autodetect_metric_cols(df: pd.DataFrame):
 
     return csat_col, Fees_col, nps_col
 
+# ============================
+# تحسين شكل الشريط الجانبي
+# ============================
+st.markdown("""
+    <style>
+        /* إزالة المسافات بين عناصر selectbox و text_input */
+        section[data-testid="stSidebar"] .stSelectbox, 
+        section[data-testid="stSidebar"] .stTextInput {
+            margin-top: -15px !important;
+        }
+
+        /* إزالة المسافة داخل العنصر نفسه أيضاً */
+        section[data-testid="stSidebar"] label {
+            margin-bottom: -3px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# ============================
 # اختيار الجهة من الشريط الجانبي
+# ============================
 st.sidebar.markdown(
     """
     <div style='font-size:20px; font-weight:700; margin-bottom:-10px;'>🏢 اختر الجهة</div>
@@ -271,13 +291,15 @@ selected_entity = st.sidebar.selectbox(
 )
 
 # إعداد إعدادات الجهة المختارة
-entity_conf = ENTITIES[selected_entity]       # هنا نأخذ ملفات الجهة (csv/xlsx)
-user_conf   = USER_KEYS[selected_entity]      # وهنا نأخذ كلمة السر والدور
+entity_conf = ENTITIES[selected_entity]
+user_conf   = USER_KEYS[selected_entity]
 
-correct_password = user_conf["password"]      # ← من USER_KEYS
+correct_password = user_conf["password"]
 is_admin = (user_conf.get("role") == "admin")
 
+# ============================
 # إدخال كلمة المرور
+# ============================
 st.sidebar.markdown(
     """
     <div style='font-size:20px; font-weight:700; margin-bottom:-10px;'>🔐 كلمة المرور</div>
@@ -1307,6 +1329,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
