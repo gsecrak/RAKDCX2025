@@ -260,10 +260,11 @@ def autodetect_metric_cols(df: pd.DataFrame):
 # اختيار الجهة من الشريط الجانبي
 st.sidebar.markdown(
     """
-    <span style='font-size:20px; font-weight:700;'>🏢 اختر الجهة:</span>
+    <div style='font-size:20px; font-weight:700; margin-bottom:-10px;'>🏢 اختر الجهة</div>
     """,
     unsafe_allow_html=True
 )
+
 selected_entity = st.sidebar.selectbox(
     "",
     list(ENTITIES.keys())
@@ -279,7 +280,7 @@ is_admin = (user_conf.get("role") == "admin")
 # إدخال كلمة المرور
 st.sidebar.markdown(
     """
-    <span style='font-size:20px; font-weight:700;'>🔐 كلمة المرور:</span>
+    <div style='font-size:20px; font-weight:700; margin-bottom:-10px;'>🔐 كلمة المرور</div>
     """,
     unsafe_allow_html=True
 )
@@ -1306,6 +1307,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
