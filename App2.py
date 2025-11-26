@@ -259,7 +259,7 @@ def autodetect_metric_cols(df: pd.DataFrame):
 
 # اختيار الجهة من الشريط الجانبي
 st.sidebar.title("اختيار الجهة")
-selected_entity = st.sidebar.selectbox("الرجاء اختيار الجهة:", list(ENTITIES.keys()))
+selected_entity = st.sidebar.selectbox("اختر الجهة:", list(ENTITIES.keys()))
 
 # إعداد إعدادات الجهة المختارة
 entity_conf = ENTITIES[selected_entity]       # هنا نأخذ ملفات الجهة (csv/xlsx)
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
