@@ -258,8 +258,16 @@ def autodetect_metric_cols(df: pd.DataFrame):
     return csat_col, Fees_col, nps_col
 
 # اختيار الجهة من الشريط الجانبي
-st.sidebar.title("🏢 اختيار الجهة")
-selected_entity = st.sidebar.selectbox("اختر الجهة:", list(ENTITIES.keys()))
+st.sidebar.markdown(
+    """
+    <span style='font-size:20px; font-weight:700;'>🏢 اختر الجهة:</span>
+    """,
+    unsafe_allow_html=True
+)
+selected_entity = st.sidebar.selectbox(
+    "",
+    list(ENTITIES.keys())
+)
 
 # إعداد إعدادات الجهة المختارة
 entity_conf = ENTITIES[selected_entity]       # هنا نأخذ ملفات الجهة (csv/xlsx)
@@ -269,9 +277,15 @@ correct_password = user_conf["password"]      # ← من USER_KEYS
 is_admin = (user_conf.get("role") == "admin")
 
 # إدخال كلمة المرور
-st.sidebar.title("🔐 كلمة المرور")
+st.sidebar.markdown(
+    """
+    <span style='font-size:20px; font-weight:700;'>🔐 كلمة المرور:</span>
+    """,
+    unsafe_allow_html=True
+)
+
 password_input = st.sidebar.text_input(
-    "كلمة المرور:",
+    "",
     type="password",
     help="لن يتم عرض التقرير إلا بعد إدخال كلمة المرور الصحيحة."
 )
@@ -1292,6 +1306,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
