@@ -240,7 +240,7 @@ def detect_nps(df: pd.DataFrame):
     return nps, promoters_pct, passives_pct, detract_pct, col
 
 def autodetect_metric_cols(df: pd.DataFrame):
-    # نحاول التعرف على أعمدة CSAT و Fees (قد تكون Dim6.1/Dim6.2 أو CSAT/CES أو FEES)
+    # نحاول التعرف على أعمدة CSAT و Fees (قد تكون Dim6.1/Dim6.2 أو CSAT/CES أو Fees)
     cols_upper = {c.upper(): c for c in df.columns}
     # CSAT
     csat_candidates = [c for c in df.columns if "CSAT" in c.upper()] 
@@ -789,7 +789,7 @@ with tab_services:
         if csat_col:
             work["السعادة (%)"] = (pd.to_numeric(work[csat_col], errors="coerce") - 1) * 25
         if Fees_col:
-            work["الرضا عن الرسوم(%)"] = (pd.to_numeric(work[Fees_col], errors="coerce") - 1) * 25
+            work["الرضا عن الرسوم (%)"] = (pd.to_numeric(work[Fees_col], errors="coerce") - 1) * 25
 
         # NPS لكل خدمة إن وُجد عمود NPS
         nps_cols = [c for c in df_view.columns if "NPS" in c.upper() or "RECOMMEND" in c.upper()]
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
