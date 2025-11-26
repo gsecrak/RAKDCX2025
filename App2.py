@@ -270,7 +270,7 @@ is_admin = (user_conf.get("role") == "admin")
 
 # إدخال كلمة المرور
 password_input = st.sidebar.text_input(
-    "🔐 كلمة المرور للجهة المختارة:",
+    "🔐 كلمة المرور:",
     type="password",
     help="لن يتم عرض التقرير إلا بعد إدخال كلمة المرور الصحيحة."
 )
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
