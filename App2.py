@@ -240,7 +240,7 @@ def detect_nps(df: pd.DataFrame):
     return nps, promoters_pct, passives_pct, detract_pct, col
 
 def autodetect_metric_cols(df: pd.DataFrame):
-    # نحاول التعرف على أعمدة CSAT و CES (قد تكون Dim6.1/Dim6.2 أو CSAT/CES أو FEES)
+    # نحاول التعرف على أعمدة CSAT و Fees (قد تكون Dim6.1/Dim6.2 أو CSAT/CES أو FEES)
     cols_upper = {c.upper(): c for c in df.columns}
     # CSAT
     csat_candidates = [c for c in df.columns if "CSAT" in c.upper()] 
@@ -248,14 +248,14 @@ def autodetect_metric_cols(df: pd.DataFrame):
     csat_col = csat_candidates[0] if csat_candidates else None
 
     #  Fees
-    ces_candidates = [c for c in df.columns if "FEES" in c.upper()]
-    ces_col = ces_candidates[0] if ces_candidates else None
+    Fees_candidates = [c for c in df.columns if "FEES" in c.upper()]
+    Fees_col = Fees_candidates[0] if Fees_candidates else None
 
     # NPS
     nps_candidates = [c for c in df.columns if "NPS" in c.upper()] 
     nps_col = nps_candidates[0] if nps_candidates else None
 
-    return csat_col, ces_col, nps_col
+    return csat_col, Fees_col, nps_col
 
 # اختيار الجهة من الشريط الجانبي
 st.sidebar.title("اختيار الجهة")
@@ -576,21 +576,21 @@ with tab_sample:
         st.markdown("---")
 
 # =========================================================
-# تبويب المؤشرات (CSAT / CES / NPS)
+# تبويب المؤشرات (CSAT / Fees / NPS)
 # =========================================================
 with tab_kpis:
     st.subheader("📊 مؤشرات الأداء الرئيسية")
-    csat_col, ces_col, nps_col = autodetect_metric_cols(df_view)
+    csat_col, Fees_col, nps_col = autodetect_metric_cols(df_view)
 
     # حساب CSAT
     csat = series_to_percent(df_view.get(csat_col, pd.Series(dtype=float))) if csat_col else np.nan
-    # حساب CES/Value
-    ces  = series_to_percent(df_view.get(ces_col,  pd.Series(dtype=float))) if ces_col else np.nan
+    # حساب Fees
+    Fees  = series_to_percent(df_view.get(Fees_col,  pd.Series(dtype=float))) if Fees_col else np.nan
     # حساب NPS
     nps, p_pct, s_pct, d_pct, nps_col = detect_nps(df_view)
 
     def color_label(score, metric_type):
-        if metric_type in ["CSAT", "CES"]:
+        if metric_type in ["CSAT", "Fees"]:
             if pd.isna(score):           return "#bdc3c7", "غير متاح"
             if score < 70:               return "#FF6B6B", "ضعيف جدًا"
             elif score < 80:             return "#FFD93D", "بحاجة إلى تحسين"
@@ -605,13 +605,13 @@ with tab_kpis:
 
     def gauge(score, title, metric_type):
         color, label = color_label(score, metric_type)
-        axis_range = [0, 100] if metric_type in ["CSAT", "CES"] else [-100, 100]
+        axis_range = [0, 100] if metric_type in ["CSAT", "Fees"] else [-100, 100]
         steps = (
             [{'range': [0, 70], 'color': '#FF6B6B'},
              {'range': [70, 80], 'color': '#FFD93D'},
              {'range': [80, 90], 'color': '#6BCB77'},
              {'range': [90, 100], 'color': '#4D96FF'}]
-            if metric_type in ["CSAT", "CES"]
+            if metric_type in ["CSAT", "Fees"]
             else [{'range': [-100, 0], 'color': '#FF6B6B'},
                   {'range': [0, 30], 'color': '#FFD93D'},
                   {'range': [30, 60], 'color': '#6BCB77'},
@@ -633,14 +633,14 @@ with tab_kpis:
 
     c1, c2, c3 = st.columns(3)
     fig1, lab1 = gauge(csat, "السعادة العامة", "CSAT")
-    fig2, lab2 = gauge(ces,  "الرضا عن الرسوم", "Fees")
+    fig2, lab2 = gauge(Fees,  "الرضا عن الرسوم", "Fees")
     fig3, lab3 = gauge(nps,  "صافي نقاط الترويج", "NPS")
     c1.plotly_chart(fig1, use_container_width=True)
     c1.markdown(f"**التفسير:** {lab1}")
     if csat_col: c1.caption(f"المصدر: {csat_col}")
     c2.plotly_chart(fig2, use_container_width=True)
     c2.markdown(f"**التفسير:** {lab2}")
-    if ces_col: c2.caption(f"المصدر: {ces_col}")
+    if Fees_col: c2.caption(f"المصدر: {Fees_col}")
     c3.plotly_chart(fig3, use_container_width=True)
     c3.markdown(f"**التفسير:** {lab3}")
     if nps_col: c3.caption(f"المصدر: {nps_col}")
@@ -784,12 +784,12 @@ with tab_services:
     if "SERVICE" not in df_view.columns:
         st.warning("⚠️ لا توجد بيانات خاصة بالخدمات (SERVICE).")
     else:
-        csat_col, ces_col, _ = autodetect_metric_cols(df_view)
+        csat_col, Fees_col, _ = autodetect_metric_cols(df_view)
         work = df_view.copy()
         if csat_col:
             work["السعادة (%)"] = (pd.to_numeric(work[csat_col], errors="coerce") - 1) * 25
-        if ces_col:
-            work["الرضا عن الرسوم(%)"] = (pd.to_numeric(work[ces_col], errors="coerce") - 1) * 25
+        if Fees_col:
+            work["الرضا عن الرسوم(%)"] = (pd.to_numeric(work[Fees_col], errors="coerce") - 1) * 25
 
         # NPS لكل خدمة إن وُجد عمود NPS
         nps_cols = [c for c in df_view.columns if "NPS" in c.upper() or "RECOMMEND" in c.upper()]
@@ -1063,8 +1063,8 @@ if is_admin:
         if "ENTITY_NAME" not in df_view.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
-            # كشف أعمدة المقاييس (CSAT / CES / NPS) تلقائياً
-            csat_col, ces_col, nps_col = autodetect_metric_cols(df_view)
+            # كشف أعمدة المقاييس (CSAT / Fees / NPS) تلقائياً
+            csat_col, Fees_col, nps_col = autodetect_metric_cols(df_view)
 
             work = df_view.copy()
 
@@ -1075,8 +1075,8 @@ if is_admin:
 
                 if csat_col:
                     row["السعادة (%)"] = series_to_percent(g[csat_col])
-                if ces_col:
-                    row["الرضا عن الرسوم (%)"] = series_to_percent(g[ces_col])
+                if Fees_col:
+                    row["الرضا عن الرسوم (%)"] = series_to_percent(g[Fees_col])
 
                 nps_val, _, _, _, _ = detect_nps(g)
                 row["NPS (%)"] = nps_val
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
