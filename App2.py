@@ -47,7 +47,7 @@ USER_KEYS = {
         "role": "center",
         "file": "EN.csv"
     },
-    "الأمانة العامة للمجلس التنفيذي": {
+    "حكومة رأس الخيمة": {
         "password": st.secrets["users"]["GS"],
         "role": "admin",
         "file": "Centers_Master.csv"   # غيّر الاسم إذا كان لديك ملف مختلف للإدارة العامة
@@ -125,7 +125,7 @@ ENTITIES = {
         "xlsx": "Data_tables_EN.xlsx",
     },
      # 👇 جهة الأدمن (تجميع كل الجهات)
-    "الأمانة العامة للمجلس التنفيذي": {
+    "حكومة رأس الخيمة": {
         "csv": "Centers_Master.csv",         # لن نستخدمها
         "xlsx": "Data_tables_MASTER.xlsx",        # لن نستخدمها
     },
@@ -1291,6 +1291,7 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 
