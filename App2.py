@@ -321,16 +321,10 @@ elif password_input != correct_password:
     st.error("❌ كلمة المرور غير صحيحة. الرجاء المحاولة مرة أخرى.")
     st.stop()
 else:
-    # بعد التحقق من كلمة المرور
-    if is_admin:
-        # جهة الأدمن: تحميل كل الجهات معًا
-        df, lookup_catalog = load_all_entities()
-    else:
-        # جهة عادية: تحميل ملف واحد فقط
-        csv_name = entity_conf["csv"]
-        xlsx_name = entity_conf["xlsx"]
-        df, lookup_catalog = load_data(csv_name, xlsx_name)
-
+    # جهة عادية: تحميل ملف واحد فقط
+    csv_name = entity_conf["csv"]
+    xlsx_name = entity_conf["xlsx"]
+    df, lookup_catalog = load_data(csv_name, xlsx_name)
     st.sidebar.markdown(f"**الجهة الحالية:** {selected_entity}")
 
 # عناوين عربية للفلاتر
@@ -1090,21 +1084,23 @@ with tab_pareto:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 # =========================================================
-# تبويب خاص للأمانة العامة: مقارنة الجهات في مؤشرات الأداء والأبعاد
+# تبويب خاص لحكومة رأس الخيمة: مقارنة الجهات في مؤشرات الأداء والأبعاد
 # =========================================================
 if is_admin:
+    # هنا نحمل بيانات جميع الجهات للمقارنات
+    df_all, _ = load_all_entities()
     with tab_admin:
 
         # ==============================
         # 1️⃣ مقارنة مؤشرات الأداء الرئيسية حسب الجهة
         # ==============================
-        if "ENTITY_NAME" not in df_view.columns:
+        if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
             # كشف أعمدة المقاييس (CSAT / Fees / NPS) تلقائياً
-            csat_col, Fees_col, nps_col = autodetect_metric_cols(df_view)
+            csat_col, Fees_col, nps_col = autodetect_metric_cols(df_all)
 
-            work = df_view.copy()
+            work = df_all.copy()
 
             # 🔹 تجميع مؤشرات الأداء الرئيسية لكل جهة
             rows = []
@@ -1190,11 +1186,11 @@ if is_admin:
         # ==============================
         # 2️⃣ مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
         # ==============================
-        if "ENTITY_NAME" not in df_view.columns:
+        if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
             # 1️⃣ نبحث عن الأعمدة الفرعية للأبعاد DimX. (مثل Dim1.1 / Dim2.3)
-            dim_subcols = [c for c in df_view.columns if re.match(r"Dim\d+\.", str(c).strip())]
+            dim_subcols = [c for c in df_all.columns if re.match(r"Dim\d+\.", str(c).strip())]
 
             if not dim_subcols:
                 st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
@@ -1208,7 +1204,7 @@ if is_admin:
 
                 # 2️⃣ حساب نتيجة كل بُعد رئيسي لكل جهة
                 rows = []
-                for ent, g in df_view.groupby("ENTITY_NAME"):
+                for ent, g in df_all.groupby("ENTITY_NAME"):
                     for i in main_ids:
                         # كل الأعمدة الفرعية التي تبدأ بـ Dim{i}.
                         sub = [c for c in g.columns if str(c).startswith(f"Dim{i}.")]
@@ -1329,17 +1325,3 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
