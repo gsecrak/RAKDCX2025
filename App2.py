@@ -430,23 +430,21 @@ AR_DIST_TITLES = {
 # =========================================================
 if is_admin:
     # جهة الأدمن: نضيف تبويب المقارنات
-    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto, tab_admin = st.tabs([
+    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_pareto, tab_admin = st.tabs([
         "📁 البيانات",
         "📈 توزيع العينة",
         "📊 المؤشرات",
         "🧩 الأبعاد",
-        "📋 الخدمات",
         "💬 المزعجات",
         "📊 المقارنات بين الجهات"
     ])
 else:
     # باقي الجهات: بدون تبويب المقارنات
-    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_services, tab_pareto = st.tabs([
+    tab_data, tab_sample, tab_kpis, tab_dimensions, tab_pareto = st.tabs([
         "📁 البيانات",
         "📈 توزيع العينة",
         "📊 المؤشرات",
         "🧩 الأبعاد",
-        "📋 الخدمات",
         "💬 المزعجات"
     ])
     
@@ -807,163 +805,7 @@ with tab_dimensions:
                 use_container_width=True,
                 hide_index=True
             )
-
-# =========================================================
-# تبويب الخدمات
-# =========================================================
-with tab_services:
-    st.subheader("📋 تحليل الخدمات")
-    if "SERVICE" not in df_view.columns:
-        st.warning("⚠️ لا توجد بيانات خاصة بالخدمات (SERVICE).")
-    else:
-        csat_col, Fees_col, _ = autodetect_metric_cols(df_view)
-        work = df_view.copy()
-        if csat_col:
-            work["السعادة العامة (%)"] = (pd.to_numeric(work[csat_col], errors="coerce") - 1) * 25
-        if Fees_col:
-            work["الرضا عن الرسوم (%)"] = (pd.to_numeric(work[Fees_col], errors="coerce") - 1) * 25
-
-        # NPS لكل خدمة إن وُجد عمود NPS
-        nps_cols = [c for c in df_view.columns if "NPS" in c.upper() or "RECOMMEND" in c.upper()]
-        if nps_cols:
-            work["NPS_VAL"] = pd.to_numeric(work[nps_cols[0]], errors="coerce")
-            nps_summary = []
-            for svc, g in work.groupby("SERVICE"):
-                s = g["NPS_VAL"].dropna()
-                if len(s) == 0:
-                    nps_summary.append((svc, np.nan))
-                    continue
-                promoters = (s >= 9).sum()
-                detractors = (s <= 6).sum()
-                total = len(s)
-                nps_value = ((promoters - detractors) / total) * 100
-                nps_summary.append((svc, nps_value))
-            nps_df = pd.DataFrame(nps_summary, columns=["SERVICE", "NPS (%)"])
-        else:
-            nps_df = pd.DataFrame(columns=["SERVICE", "NPS (%)"])
-
-        # حساب المتوسط وعدد الردود
-        agg_dict = {}
-        if "السعادة العامة (%)" in work.columns: agg_dict["السعادة العامة (%)"] = "mean"
-        if "الرضا عن الرسوم (%)" in work.columns:  agg_dict["الرضا عن الرسوم (%)"]  = "mean"
-        if csat_col:                   agg_dict[csat_col]    = "count"
-
-        if not agg_dict:
-            st.info("لا توجد أعمدة كافية لحساب مؤشرات الخدمة.")
-        else:
-            summary = work.groupby("SERVICE").agg(agg_dict).reset_index()
-            if csat_col and csat_col in summary.columns:
-                summary.rename(columns={csat_col: "عدد الردود"}, inplace=True)
-
-            # دمج NPS
-            if not nps_df.empty:
-                summary = summary.merge(nps_df, on="SERVICE", how="left")
-
-            # ترجمة اسم الخدمة عبر lookup (إن وجد sheet باسم SERVICE)
-            if "SERVICE" in lookup_catalog:
-                tbl = lookup_catalog["SERVICE"].copy()
-                tbl.columns = [str(c).strip().upper() for c in tbl.columns]
-                code_col = next((c for c in tbl.columns if "CODE" in c or "SERVICE" in c), None)
-                ar_col   = next((c for c in tbl.columns if ("ARABIC" in c) or ("SERVICE2" in c)), None)
-                if code_col and ar_col:
-                    name_map = dict(zip(tbl[code_col].astype(str), tbl[ar_col].astype(str)))
-                    summary["SERVICE"] = summary["SERVICE"].astype(str).map(name_map).fillna(summary["SERVICE"])
-
-            # فلترة إلى خدمات بعدد ردود كافٍ (اختياري: 30)
-            if "عدد الردود" in summary.columns:
-                summary = summary[summary["عدد الردود"] >= 30]
-
-            # ترتيب
-            sort_key = "السعادة العامة (%)" if "السعادة العامة (%)" in summary.columns else ("الرضا عن الرسوم (%)" if "الرضا عن الرسوم (%)" in summary.columns else None)
-            if sort_key:
-                summary = summary.sort_values(sort_key, ascending=False)
-
-            # ✅ تلوين الخلايا في الجدول (السعادة العامة والرضا عن الرسوم فقط)
-            def color_cells(val):
-                try:
-                    v = float(val)
-                    if v < 70:
-                        color = "#FF6B6B"  # أحمر
-                    elif v < 80:
-                        color = "#FFD93D"  # أصفر
-                    elif v < 90:
-                        color = "#6BCB77"  # أخضر
-                    else:
-                        color = "#4D96FF"  # أزرق
-                    return f"background-color:{color};color:black"
-                except:
-                    return ""
-
-            # 📋 إعداد الـ format حسب الأعمدة المتوفرة
-            format_dict = {}
-            if "السعادة العامة (%)" in summary.columns:
-                format_dict["السعادة العامة (%)"] = "{:.1f}%"
-            if "الرضا عن الرسوم (%)" in summary.columns:
-                format_dict["الرضا عن الرسوم (%)"] = "{:.1f}%"
-            if "NPS (%)" in summary.columns:
-                format_dict["NPS (%)"] = "{:.1f}%"
-            if "عدد الردود" in summary.columns:
-                format_dict["عدد الردود"] = "{:,.0f}"
-
-            subset_cols = [c for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)"] if c in summary.columns]
-
-            # 📋 عرض الجدول
-            styled_table = (
-                summary.style
-                .format(format_dict)
-                .applymap(color_cells, subset=subset_cols)
-            )
-            st.dataframe(styled_table, use_container_width=True)
-
-            # 🛈 ملاحظة توضيحية باللغتين
-            st.markdown(
-                """
-                **ℹ️ ملاحظة:**  
-                يتم عرض الخدمات التي تحتوي على **30 ردًا أو أكثر فقط** لضمان دقة النتائج.  
-                """
-            )
-
-            # رسم مقارنة (السعادة العامة/الرضا عن الرسوم)
-            if "السعادة العامة (%)" in summary.columns or "الرضا عن الرسوم (%)" in summary.columns:
-                melted = summary.melt(
-                    id_vars=["SERVICE"],
-                    value_vars=[v for v in ["السعادة العامة (%)", "الرضا عن الرسوم (%)"] if v in summary.columns],
-                    var_name="المؤشر",
-                    value_name="الرضا عن الرسوم"
-                )
-
-                fig = px.bar(
-                    melted,
-                    x="SERVICE",
-                    y="الرضا عن الرسوم",
-                    color="المؤشر",
-                    barmode="group",
-                    text="الرضا عن الرسوم",
-                    color_discrete_sequence=PASTEL,
-                    title="مقارنة مؤشري السعادة العامة والرضا عن الرسوم حسب الخدمة"
-                )
-                fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
-
-                fig.update_layout(
-                    yaxis=dict(range=[0, 100]),
-                    xaxis_title="الخدمة",
-                    yaxis_title="النسبة (%)"
-                )
-
-                # 🔥 تكبير العنوان + توسيطه
-                fig.update_layout(
-                    title={
-                        "text": "مقارنة مؤشري السعادة العامة والرضا عن الرسوم حسب الخدمة 📊",
-                        "x": 0.5,
-                        "y": 0.95,
-                        "xanchor": "center",
-                        "yanchor": "top"
-                    },
-                    title_font_size=20
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-
+            
 # =========================================================
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
 # =========================================================
@@ -1369,4 +1211,5 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
 
