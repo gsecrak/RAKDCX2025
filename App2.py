@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 # Arabic CX Dashboard (3 Dimensions) — Streamlit
 # Files expected in the same folder:
@@ -16,6 +15,7 @@ import plotly.graph_objects as go
 import io, re
 from datetime import datetime
 from pathlib import Path
+
 USER_KEYS = {
     "بلدية رأس الخيمة": {
         "password": st.secrets["users"]["MN"],
@@ -53,6 +53,7 @@ USER_KEYS = {
         "file": "Centers_Master.csv"   # غيّر الاسم إذا كان لديك ملف مختلف للإدارة العامة
     }
 }
+
 # =========================================================
 # إعداد الصفحة + اتجاه RTL
 # =========================================================
@@ -68,35 +69,67 @@ st.markdown(f"""
     <hr style="margin-top:20px; margin-bottom:10px;">
 """, unsafe_allow_html=True)
 
-# اتجاه عربي وخط مناسب
+# =========================================================
+# ✅ RTL FIX (تعديل ثابت ومتوافق مع تحديثات Streamlit)
+# =========================================================
 st.markdown("""
-    <style>
-        html, body, [class*="css"] {
-            direction: rtl;
-            text-align: right;
-            font-family: "Tajawal","Cairo","Segoe UI";
-        }
+<style>
+/* RTL على مستوى التطبيق بالكامل */
+[data-testid="stAppViewContainer"],
+[data-testid="block-container"],
+[data-testid="stSidebar"] {
+    direction: rtl !important;
+    text-align: right !important;
+    font-family: "Tajawal","Cairo","Segoe UI", sans-serif !important;
+}
 
-        /* شريط التبويبات: اتجاه عربي وثابت في اليمين */
-        .stTabs [data-baseweb="tab-list"] {
-            direction: rtl !important;          /* أول تبويب يكون عند اليمين */
-            display: flex !important;
-            justify-content: flex-start !important;  /* يبدأ من اليمين */
-            width: 100% !important;             /* يأخذ عرض السطر بالكامل */
-        }
+/* كل ما بداخل التطبيق */
+[data-testid="stAppViewContainer"] *,
+[data-testid="stSidebar"] * {
+    direction: rtl !important;
+    text-align: right !important;
+}
 
-        /* نص كل تبويب يكون RTL ومحاذى يمين */
-        .stTabs [data-baseweb="tab"] > div {
-            direction: rtl !important;
-            text-align: right !important;
-        }
+/* العناوين والنصوص */
+h1, h2, h3, h4, h5, h6,
+p, label, span, li {
+    direction: rtl !important;
+    text-align: right !important;
+}
 
-        .stDownloadButton, .stButton > button {
-            font-weight: 600;
-        }
-    </style>
+/* حقول الإدخال */
+[data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* القوائم المنسدلة */
+[data-baseweb="select"] * {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+/* شريط التبويبات: يبدأ من اليمين بشكل مضمون */
+.stTabs [data-baseweb="tab-list"] {
+    direction: rtl !important;
+    display: flex !important;
+    flex-direction: row-reverse !important;   /* ✅ الأول يظهر يمين */
+    justify-content: flex-end !important;     /* ✅ محاذاة يمين */
+    width: 100% !important;
+}
+
+/* نص كل تبويب RTL ومحاذى يمين */
+.stTabs [data-baseweb="tab"] > div {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+.stDownloadButton, .stButton > button {
+    font-weight: 600;
+}
+</style>
 """, unsafe_allow_html=True)
-
 
 # قاموس الجهات والملفات
 ENTITIES = {
@@ -124,19 +157,16 @@ ENTITIES = {
         "csv": "EN.csv",
         "xlsx": "Data_tables_EN.xlsx",
     },
-     # 👇 جهة الأدمن (تجميع كل الجهات)
+    # 👇 جهة الأدمن (تجميع كل الجهات)
     "حكومة رأس الخيمة": {
-        "csv": "Centers_Master.csv",         # لن نستخدمها
-        "xlsx": "Data_tables_MASTER.xlsx",        # لن نستخدمها
+        "csv": "Centers_Master.csv",            # لن نستخدمها
+        "xlsx": "Data_tables_MASTER.xlsx",      # لن نستخدمها
     },
 }
 
 # =========================================================
 # تحميل البيانات
 # =========================================================
-# تحميل البيانات مع إضافة سطر المعاني (Arabic Labels)
-# =========================================================
-#@st.cache_data(show_spinner=False)
 def load_data(csv_name: str, xlsx_name: str):
     # البيانات الرئيسية
     df = pd.read_csv(csv_name, encoding="utf-8", low_memory=False)
@@ -168,11 +198,12 @@ def load_data(csv_name: str, xlsx_name: str):
                 for c in df.columns:
                     key = c.strip().upper()
                     arabic_row.append(code_to_arabic.get(key, ""))
-                # إدراج السطر العربي في الأعلى (اختياري)
                 arabic_df = pd.DataFrame([arabic_row], columns=df.columns)
                 # df = pd.concat([arabic_df, df], ignore_index=True)
 
     return df, lookup_catalog
+
+
 def load_all_entities():
     """تحميل بيانات جميع الجهات ودمجها في DataFrame واحد مع عمود ENTITY_NAME"""
     frames = []
@@ -221,6 +252,7 @@ def series_to_percent(vals: pd.Series):
     else:        # بيانات جاهزة كنسب
         return vals.mean()
 
+
 def detect_nps(df: pd.DataFrame):
     cand_cols = [c for c in df.columns if ("NPS" in c.upper()) or ("RECOMMEND" in c.upper()) or ("NETPROMOTER" in c.upper())]
     if not cand_cols:
@@ -239,23 +271,23 @@ def detect_nps(df: pd.DataFrame):
     nps = promoters_pct - detract_pct
     return nps, promoters_pct, passives_pct, detract_pct, col
 
+
 def autodetect_metric_cols(df: pd.DataFrame):
     # نحاول التعرف على أعمدة CSAT و Fees (قد تكون Dim6.1/Dim6.2 أو CSAT/CES أو Fees)
-    cols_upper = {c.upper(): c for c in df.columns}
     # CSAT
-    csat_candidates = [c for c in df.columns if "CSAT" in c.upper()] 
-
+    csat_candidates = [c for c in df.columns if "CSAT" in c.upper()]
     csat_col = csat_candidates[0] if csat_candidates else None
 
-    #  Fees
+    # Fees
     Fees_candidates = [c for c in df.columns if "FEES" in c.upper()]
     Fees_col = Fees_candidates[0] if Fees_candidates else None
 
     # NPS
-    nps_candidates = [c for c in df.columns if "NPS" in c.upper()] 
+    nps_candidates = [c for c in df.columns if "NPS" in c.upper()]
     nps_col = nps_candidates[0] if nps_candidates else None
 
     return csat_col, Fees_col, nps_col
+
 
 # ============================
 # تحسين شكل الشريط الجانبي
@@ -263,7 +295,7 @@ def autodetect_metric_cols(df: pd.DataFrame):
 st.markdown("""
     <style>
         /* إزالة المسافات بين عناصر selectbox و text_input */
-        section[data-testid="stSidebar"] .stSelectbox, 
+        section[data-testid="stSidebar"] .stSelectbox,
         section[data-testid="stSidebar"] .stTextInput {
             margin-top: -15px !important;
         }
@@ -338,18 +370,13 @@ ARABIC_FILTER_TITLES = {
 }
 
 st.sidebar.header("🎛️ الفلاتر")
-# نحاول تطبيق ترجمة للأبعاد/المتغيرات باستخدام جداول الـ lookup إذا وجدت
 df_filtered = df.copy()
 
 # سنعرض فلاتر لأكثر الحقول شيوعًا؛ ويمكن التوسع تلقائيًا إذا وُجدت جداول مطابقة في الـ lookup
-candidate_filter_cols = []
-# أبعاد ديموغرافية أو وصفية شائعة
 common_keys = ["Language", "SERVICE", "AGE", "PERIOD", "CHANNEL", "ENTITY_NAME"]
 candidate_filter_cols = [c for c in df.columns if any(k in c.upper() for k in common_keys)]
 
-# وظيفة لتطبيق جدول lookup إذا توفّر باسم العمود
 
-# وظيفة لتطبيق جدول lookup (تربط تلقائيًا بين الأكواد والأسماء العربية)
 def apply_lookup(column_name: str, s: pd.Series) -> pd.Series:
     key = column_name.strip().upper()
 
@@ -390,7 +417,6 @@ with st.sidebar.expander("تطبيق/إزالة الفلاتر"):
     applied_filters = {}
 
     for col in candidate_filter_cols:
-
         # طبّق الترجمة على القيم داخل الفلاتر
         df_filtered[col] = apply_lookup(col, df_filtered[col])
 
@@ -407,16 +433,13 @@ with st.sidebar.expander("تطبيق/إزالة الفلاتر"):
 
         applied_filters[col] = sel
 
-
 # تطبيق الفلاتر
 for col, selected in applied_filters.items():
     if selected:
         df_filtered = df_filtered[df_filtered[col].isin(selected)]
 
-# البيانات النهائية للعرض
 df_view = df_filtered.copy()
 
-# عناوين عربية للأعمدة التي نريد رسم توزيعها
 AR_DIST_TITLES = {
     "AGE": "العمر",
     "SERVICE": "الخدمة",
@@ -429,7 +452,6 @@ AR_DIST_TITLES = {
 # التبويبات
 # =========================================================
 if is_admin:
-    # جهة الأدمن: نضيف تبويب المقارنات
     tab_data, tab_sample, tab_kpis, tab_dimensions, tab_pareto, tab_admin = st.tabs([
         "📁 البيانات",
         "📈 توزيع العينة",
@@ -439,7 +461,6 @@ if is_admin:
         "📊 المقارنات بين الجهات"
     ])
 else:
-    # باقي الجهات: بدون تبويب المقارنات
     tab_data, tab_sample, tab_kpis, tab_dimensions, tab_pareto = st.tabs([
         "📁 البيانات",
         "📈 توزيع العينة",
@@ -447,12 +468,11 @@ else:
         "🧩 الأبعاد",
         "💬 المزعجات"
     ])
-    
+
 # =========================================================
 # تبويب البيانات + تنزيل
 # =========================================================
 with tab_data:
-    # st.subheader("📁 البيانات")
     st.dataframe(df_view, use_container_width=True)
     ts = datetime.now().strftime("%Y-%m-%d_%H%M")
     buf = io.BytesIO()
@@ -473,12 +493,10 @@ with tab_sample:
         unsafe_allow_html=True,
     )
 
-    # نوع الرسم
     chart_type = st.radio(
         "📊 نوع الرسم", ["مخطط أعمدة", "مخطط دائري"], index=0, horizontal=True
     )
 
-    # خيار عرض العدد أو النسبة أو كليهما
     display_mode = st.radio(
         "📋 طريقة العرض:",
         ["العدد فقط", "النسبة فقط", "العدد + النسبة"],
@@ -486,7 +504,6 @@ with tab_sample:
         index=1,
     )
 
-    # الأعمدة التي نريد لها توزيع (5 فقط)
     dist_base = ["AGE", "SERVICE", "LANGUAGE", "PERIOD", "CHANNEL"]
     dist_cols = [c for c in candidate_filter_cols if c.upper() in dist_base]
 
@@ -507,7 +524,6 @@ with tab_sample:
             counts["Count"] / counts["Count"].sum() * 100
         )
 
-        # تحديد العمود المستخدم حسب اختيار المستخدم
         if display_mode == "العدد فقط":
             y_col = "Count"
             y_label = "عدد الردود"
@@ -516,21 +532,19 @@ with tab_sample:
             y_col = "Percentage"
             y_label = "النسبة (%)"
             text_col = counts["Percentage"].map("{:.1f}%".format)
-        else:  # العدد + النسبة
+        else:
             y_col = "Count"
             y_label = "عدد الردود"
             text_col = counts.apply(
                 lambda x: f"{x['Count']} ({x['Percentage']:.1f}%)", axis=1
             )
 
-        # عنوان عربي للمخطط
         col_key = col.upper()
         col_label = AR_DIST_TITLES.get(col_key, col)
         title_text = f"توزيع {col_label}"
 
         st.markdown(f"### {title_text}")
 
-        # ===== رسم المخطط =====
         if chart_type == "مخطط أعمدة":
             fig = px.bar(
                 counts,
@@ -552,7 +566,7 @@ with tab_sample:
             fig.update_layout(title_font_size=20)
             st.plotly_chart(fig, use_container_width=True)
 
-        else:  # === مخطط دائري ===
+        else:
             fig = px.pie(
                 counts,
                 names=col,
@@ -567,10 +581,8 @@ with tab_sample:
                 title={"text": title_text, "x": 0.5},
                 height=500,
             )
-
             fig.update_layout(title_font_size=20)
-            
-            # تعديل النص حسب اختيار المستخدم
+
             if display_mode == "العدد فقط":
                 fig.update_traces(
                     textposition="inside",
@@ -581,7 +593,7 @@ with tab_sample:
                     textposition="inside",
                     texttemplate="%{label}<br>%{percent:.1%}",
                 )
-            else:  # كلاهما
+            else:
                 fig.update_traces(
                     textposition="inside",
                     texttemplate="%{label}<br>%{value} (%{percent:.1%})",
@@ -589,7 +601,6 @@ with tab_sample:
 
             st.plotly_chart(fig, use_container_width=True)
 
-        # ===== جدول ملخص تحت المخطط =====
         st.dataframe(
             counts[[col, "Count", "Percentage"]]
             .rename(
@@ -612,11 +623,8 @@ with tab_kpis:
     st.subheader("📊 مؤشرات الأداء الرئيسية")
     csat_col, Fees_col, nps_col = autodetect_metric_cols(df_view)
 
-    # حساب CSAT
     csat = series_to_percent(df_view.get(csat_col, pd.Series(dtype=float))) if csat_col else np.nan
-    # حساب Fees
     Fees  = series_to_percent(df_view.get(Fees_col,  pd.Series(dtype=float))) if Fees_col else np.nan
-    # حساب NPS
     nps, p_pct, s_pct, d_pct, nps_col = detect_nps(df_view)
 
     def color_label(score, metric_type):
@@ -626,7 +634,7 @@ with tab_kpis:
             elif score < 80:             return "#FFD93D", "بحاجة إلى تحسين"
             elif score < 90:             return "#6BCB77", "جيد"
             else:                        return "#4D96FF", "ممتاز"
-        else:  # NPS
+        else:
             if pd.isna(score):           return "#bdc3c7", "غير متاح"
             if score < 0:                return "#FF6B6B", "ضعيف جدًا"
             elif score < 30:             return "#FFD93D", "ضعيف"
@@ -676,9 +684,6 @@ with tab_kpis:
     if nps_col: c3.caption(f"المصدر: {nps_col}")
     c3.markdown(f"المروجون: {p_pct:.1f}% | المحايدون: {s_pct:.1f}% | المعارضون: {d_pct:.1f}%", unsafe_allow_html=True)
 
-    # =========================================================
-    # 🎨 وسيلتا الإيضاح (Legends)
-    # =========================================================
     legend_html = """
     <div style='background-color:#f9f9f9;border:1px solid #ddd;border-radius:10px;padding:12px;margin-top:15px;'>
         <h4 style='margin-bottom:8px;'>🎨 وسيلة الإيضاح — السعادة العامة / الرضا عن الرسوم</h4>
@@ -701,21 +706,16 @@ with tab_kpis:
 # تبويب الأبعاد (3 أبعاد فقط)
 # =========================================================
 with tab_dimensions:
-    # st.subheader("🧩 تحليل الأبعاد")
-
-    # نبحث عن الأعمدة التي تبدأ بـ "DimX." (الأسئلة الفرعية داخل كل بعد)
     dim_subcols = [c for c in df_view.columns if re.match(r"Dim\d+\.", str(c).strip())]
     if not dim_subcols:
         st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3).")
     else:
-        # بناء المتوسط لكل بعد رئيسي (Dim1, Dim2, Dim3...) — نلتقط ما هو متاح
         main_dim_map = {}
         for i in range(1, 6):
             sub = [c for c in df_view.columns if str(c).startswith(f"Dim{i}.")]
             if sub:
                 main_dim_map[f"Dim{i}"] = df_view[sub].apply(pd.to_numeric, errors="coerce").mean(axis=1)
 
-        # إنشاء ملخص بنتائج الأبعاد
         summary = []
         for dim, series in main_dim_map.items():
             score = series_to_percent(series)
@@ -725,17 +725,14 @@ with tab_dimensions:
         if dims.empty:
             st.info("لا توجد نتائج كافية للأبعاد.")
         else:
-            # ترتيب الأبعاد حسب الرقم (Dim1, Dim2...)
             dims["Order"] = dims["Dimension"].str.extract(r"(\d+)").astype(float)
             dims = dims.sort_values("Order").reset_index(drop=True)
 
-            # 🔄 استبدال أسماء الأبعاد من ورقة "Questions" في ملف Excel إذا وُجدت
             for sheet_name in lookup_catalog.keys():
-                if "QUESTION" in sheet_name:  # يلتقط Question أو Questions
+                if "QUESTION" in sheet_name:
                     qtbl = lookup_catalog[sheet_name].copy()
                     qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
 
-                    # محاولة تحديد عمود الأكواد وعمود الاسم العربي
                     code_col = next((c for c in qtbl.columns if any(k in c for k in ["DIM", "CODE", "QUESTION", "ID"])), None)
                     name_col = next((c for c in qtbl.columns if any(k in c for k in ["ARABIC", "NAME", "LABEL", "TEXT"])), None)
 
@@ -747,15 +744,13 @@ with tab_dimensions:
                         name_series = qtbl[name_col].astype(str)
                         map_dict = dict(zip(code_series, name_series))
 
-                        # استبدال الأكواد بالأسماء العربية
                         dims["Dimension"] = (
                             _norm(dims["Dimension"])
                             .map(map_dict)
                             .fillna(dims["Dimension"])
                         )
-                    break  # توقف بعد العثور على الورقة المطابقة
+                    break
 
-            # تصنيف الأبعاد حسب التقييم
             def cat(score):
                 if score < 70:  return "🔴 ضعيف"
                 elif score < 80: return "🟡 متوسط"
@@ -763,7 +758,6 @@ with tab_dimensions:
                 else:            return "🔵 ممتاز"
             dims["Category"] = dims["Score"].apply(cat)
 
-            # رسم بياني للأبعاد
             fig = px.bar(
                 dims, x="Dimension", y="Score", text="Score", color="Category",
                 color_discrete_map={
@@ -778,7 +772,7 @@ with tab_dimensions:
             fig.update_layout(
                 title={
                     'text': "<span style='font-size:22px; font-weight:bold;'>تحليل متوسط الأبعاد 📊</span>",
-                    'x': 0.5,  # المنتصف
+                    'x': 0.5,
                     'xanchor': 'center'
                 },
                 yaxis=dict(range=[0, 100]),
@@ -787,7 +781,6 @@ with tab_dimensions:
             )
 
             st.plotly_chart(fig, use_container_width=True)
-            # وسيلة الإيضاح ثنائية اللغة
             st.markdown(
                 """
                 **🗂️ وسيلة الإيضاح:**
@@ -796,8 +789,8 @@ with tab_dimensions:
                 - 🟢 من 80٪ إلى أقل من 90٪ — جيد  
                 - 🔵 90٪ فأكثر — ممتاز  
                 """,
-            unsafe_allow_html=True)
-            # عرض جدول الأبعاد
+                unsafe_allow_html=True
+            )
             st.dataframe(
                 dims[["Dimension", "Score"]]
                 .rename(columns={"Dimension": "البعد", "Score": "النسبة (%)"})
@@ -805,7 +798,7 @@ with tab_dimensions:
                 use_container_width=True,
                 hide_index=True
             )
-            
+
 # =========================================================
 # 💬 تحليل أسباب عدم الرضا (Most_Unsat) بطريقة Pareto
 # =========================================================
@@ -820,7 +813,6 @@ with tab_pareto:
         data_unsat.columns = ["Comment"]
         data_unsat["Comment"] = data_unsat["Comment"].astype(str).str.strip()
 
-        # استثناء الإجابات العامة
         exclude_terms = ["", " ", "لا يوجد", "لايوجد", "لاشيء", "لا شيء",
                          "none", "no", "nothing", "nil", "جيد", "ممتاز", "ok", "تمام", "great"]
         data_unsat = data_unsat[~data_unsat["Comment"].str.lower().isin([t.lower() for t in exclude_terms])]
@@ -829,60 +821,46 @@ with tab_pareto:
         if data_unsat.empty:
             st.info("لا توجد ملاحظات نصية كافية بعد التنظيف.")
         else:
-            # 🔹 تصنيف التعليقات حسب المحاور
             themes = {
-
-                # 1) السرعة / زمن الإنجاز (رقمي فقط)
                 "السرعة / زمن الإنجاز": [
-                "بطء", "البطء", "بطيء", "احيانا البرنامج بطئاً", "Site loading", "loading", "Delay", "Late", "Long delay", "التأخير الكثير", "تاخير المعامله", "تاخير المعاملات",
-                "طول وقت المتابعة", "طول فترة الانجاز","التاخير", "تاخير", "التأخير"
+                    "بطء", "البطء", "بطيء", "احيانا البرنامج بطئاً", "Site loading", "loading", "Delay", "Late", "Long delay",
+                    "التأخير الكثير", "تاخير المعامله", "تاخير المعاملات", "طول وقت المتابعة", "طول فترة الانجاز", "التاخير", "تاخير", "التأخير"
                 ],
-
-            # 2) الإجراءات الرقمية / الخطوات داخل النظام
                 "الإجراءات / الخطوات": [
-                "إجراء", "اجراء", "عملية", "process","خطوات", "مراحل", "نموذج","كثرة الإجراءات", "كثرة التعقيدات","صعوبة الاجراءات","كثرة تغيير الاجراءات", "كثرة المدخلات المطلوبة",
-                "عدم وجود خطوات واضحة", "كثرة إرسال الرسائل", "الاشعارات المتكررة", "صعوبة التعديل على الإدخال بعد التقديم"
+                    "إجراء", "اجراء", "عملية", "process", "خطوات", "مراحل", "نموذج", "كثرة الإجراءات", "كثرة التعقيدات", "صعوبة الاجراءات",
+                    "كثرة تغيير الاجراءات", "كثرة المدخلات المطلوبة", "عدم وجود خطوات واضحة", "كثرة إرسال الرسائل", "الاشعارات المتكررة",
+                    "صعوبة التعديل على الإدخال بعد التقديم"
                 ],
-
-            # 3) الرسوم / الدفع الرقمي
-            "الرسوم / الدفع الرقمي": [
-            "رسوم", "دفع الرسوم", "دفع رسوم بدون نتيجة", "خصم المبلغ", "اخسر فلوس", "المبالغ المالية", "التكاليف", "النسبة العالية", "يرجى تسهيل عمليات الدفع",
-            "عملية الدفع بطيئة جدا", "عدم استرجاع المبلغ", "رسوم الدفع الاضافية للبوابة", "payment issues occurred most of the time"
-            ],
-
-            # 4) التواصل / الدعم الفني (رقمي)
-            "التواصل / الدعم الفني": [
-            "تواصل", "اتصال", "رد", "response", "support", "customer support", "customer service", "صعوبة التواصل", "صعوبة التواصل في حال وجود مشكلة",
-            "عدم استجابة فريق الدعم الفني", "عدم استجابة الدعم الفني لحل مشاكل النظام","خدمات الدعم الفني ليست سلسه", "عدم الاستجابة", "عدم الاستجابه السريعه",
-            "لم أتلقى أي رد", "لم احصل على معلومات من الشكوى", "NO PROPER CUSTOMER SUPPORT", "NEED TO EASLY CONTACT TO CUSTOMER SUPPORT ONLINE"
-            ],
-
-            # 5) الوضوح / المعلومات داخل النظام
-            "الوضوح / المعلومات": [
-            "There is not proper information in English", "معلومة", "معلومات", "تفاصيل", "بيانات", "غير واضحه المعلومه", "صعوبة الحصول على المعلومات",
-            "قلة وضوح المعلومات", "عدم وضوح المتطلبات", "عدم وضوح الملاحظات عند الرفض", "There is not proper information in English", "Properly information not giving",
-            "court communication in Arabic only"
-            ],
-
-            # 6) الأمان / الدخول
-            "الأمان / الدخول": [
-            "دخول", "login", "تحقق", "كلمة مرور", "أمان", "عدم القدرة على الدخول عبر الهاتف", "Some issues when accessing with UAE pass", "Some bug with app access",
-            "عدم القدرة على الطلب"
-            ],
-
-            # 7) الأعطال التقنية / النظام
-            "الأعطال التقنية عامة": [
-            "مشاكل النظام", "مشكلة تقنية", "عدم فتح الرابط للموقع", "المتصفح بطئ جدا", "الموقع يحتاج إلى تحديث", "توقف الموقع الالكتروني عن العمل",
-            "Errors for the service", "Bug", "Some bug with app access","التطبيق يحتاج إلى تعديلات"
-            ],
-
-            # 8) رفع وتحميل المستندات
-            "رفع وتحميل المستندات": [
-            "طريقة تحميل المستندات", "صعوبة رفع المستندات", "المتصفح لا يحفظ مستندات", "the repeat upload of papers",
-            "No option for attaching the photo", "تم ارفاق الاوراق ولم تظهر", "عدم القدرة على تخليص المعاملة بسبب المستندات", "صعوبة تقديم الخدمات عبر الموقع/التطبيق"
-            ],
+                "الرسوم / الدفع الرقمي": [
+                    "رسوم", "دفع الرسوم", "دفع رسوم بدون نتيجة", "خصم المبلغ", "اخسر فلوس", "المبالغ المالية", "التكاليف", "النسبة العالية",
+                    "يرجى تسهيل عمليات الدفع", "عملية الدفع بطيئة جدا", "عدم استرجاع المبلغ", "رسوم الدفع الاضافية للبوابة",
+                    "payment issues occurred most of the time"
+                ],
+                "التواصل / الدعم الفني": [
+                    "تواصل", "اتصال", "رد", "response", "support", "customer support", "customer service", "صعوبة التواصل",
+                    "صعوبة التواصل في حال وجود مشكلة", "عدم استجابة فريق الدعم الفني", "عدم استجابة الدعم الفني لحل مشاكل النظام",
+                    "خدمات الدعم الفني ليست سلسه", "عدم الاستجابة", "عدم الاستجابه السريعه", "لم أتلقى أي رد",
+                    "لم احصل على معلومات من الشكوى", "NO PROPER CUSTOMER SUPPORT", "NEED TO EASLY CONTACT TO CUSTOMER SUPPORT ONLINE"
+                ],
+                "الوضوح / المعلومات": [
+                    "There is not proper information in English", "معلومة", "معلومات", "تفاصيل", "بيانات", "غير واضحه المعلومه",
+                    "صعوبة الحصول على المعلومات", "قلة وضوح المعلومات", "عدم وضوح المتطلبات", "عدم وضوح الملاحظات عند الرفض",
+                    "Properly information not giving", "court communication in Arabic only"
+                ],
+                "الأمان / الدخول": [
+                    "دخول", "login", "تحقق", "كلمة مرور", "أمان", "عدم القدرة على الدخول عبر الهاتف",
+                    "Some issues when accessing with UAE pass", "Some bug with app access", "عدم القدرة على الطلب"
+                ],
+                "الأعطال التقنية عامة": [
+                    "مشاكل النظام", "مشكلة تقنية", "عدم فتح الرابط للموقع", "المتصفح بطئ جدا", "الموقع يحتاج إلى تحديث",
+                    "توقف الموقع الالكتروني عن العمل", "Errors for the service", "Bug", "Some bug with app access", "التطبيق يحتاج إلى تعديلات"
+                ],
+                "رفع وتحميل المستندات": [
+                    "طريقة تحميل المستندات", "صعوبة رفع المستندات", "المتصفح لا يحفظ مستندات", "the repeat upload of papers",
+                    "No option for attaching the photo", "تم ارفاق الاوراق ولم تظهر", "عدم القدرة على تخليص المعاملة بسبب المستندات",
+                    "صعوبة تقديم الخدمات عبر الموقع/التطبيق"
+                ],
             }
-
 
             def classify_text(txt):
                 t = txt.lower()
@@ -894,7 +872,6 @@ with tab_pareto:
             data_unsat["المحور"] = data_unsat["Comment"].apply(classify_text)
             data_unsat = data_unsat[data_unsat["المحور"] != "غير مصنّف"]
 
-            # 🔢 تجميع حسب المحور + ضمّ التعليقات بفاصل "/"
             summary = data_unsat.groupby("المحور").agg({
                 "Comment": lambda x: " / ".join(x.tolist())
             }).reset_index()
@@ -905,12 +882,10 @@ with tab_pareto:
             summary["النسبة التراكمية (%)"] = summary["النسبة (%)"].cumsum()
             summary["اللون"] = np.where(summary["النسبة التراكمية (%)"] <= 80, "#E74C3C", "#BDC3C7")
 
-            # ✅ أول بند يتجاوز 80٪ يكون أحمر أيضًا
             if not summary[summary["النسبة التراكمية (%)"] > 80].empty:
                 first_above = summary[summary["النسبة التراكمية (%)"] > 80].index[0]
                 summary.loc[first_above, "اللون"] = "#E74C3C"
 
-            # 🧾 عرض الجدول
             st.dataframe(
                 summary[["المحور", "عدد الملاحظات", "النسبة (%)", "النسبة التراكمية (%)", "Comment"]]
                 .rename(columns={"Comment": "التعليقات (مجمعة)"}).style.format({
@@ -921,7 +896,6 @@ with tab_pareto:
                 hide_index=True
             )
 
-            # 📊 رسم Pareto
             fig = go.Figure()
             fig.add_bar(
                 x=summary["المحور"],
@@ -941,7 +915,7 @@ with tab_pareto:
             )
             fig.update_layout(
                 title={
-                "text": "📊 تحليل باريتو - المحاور الرئيسية",
+                    "text": "📊 تحليل باريتو - المحاور الرئيسية",
                     "x": 0.5,
                     "y": 0.95,
                     "xanchor": "center",
@@ -956,12 +930,12 @@ with tab_pareto:
                 legend=dict(orientation="h", y=-0.2)
             )
             st.plotly_chart(fig, use_container_width=True)
-            # 📥 زر تنزيل جدول Pareto (Excel)
+
             pareto_buffer = io.BytesIO()
             with pd.ExcelWriter(pareto_buffer, engine="openpyxl") as writer:
                 summary.to_excel(writer, index=False, sheet_name="Pareto_Results")
 
-            pareto_buffer.seek(0)  # لضمان القراءة من البداية
+            pareto_buffer.seek(0)
 
             st.download_button(
                 label="📥 تنزيل جدول Pareto (Excel)",
@@ -969,26 +943,20 @@ with tab_pareto:
                 file_name=f"Pareto_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
 # =========================================================
 # تبويب خاص لحكومة رأس الخيمة: مقارنة الجهات في مؤشرات الأداء والأبعاد
 # =========================================================
 if is_admin:
-    # هنا نحمل بيانات جميع الجهات للمقارنات
     df_all, _ = load_all_entities()
     with tab_admin:
 
-        # ==============================
-        # 1️⃣ مقارنة مؤشرات الأداء الرئيسية حسب الجهة
-        # ==============================
         if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
-            # كشف أعمدة المقاييس (CSAT / Fees / NPS) تلقائياً
             csat_col, Fees_col, nps_col = autodetect_metric_cols(df_all)
-
             work = df_all.copy()
 
-            # 🔹 تجميع مؤشرات الأداء الرئيسية لكل جهة
             rows = []
             for ent, g in work.groupby("ENTITY_NAME"):
                 row = {"الجهة": ent, "عدد الردود": len(g)}
@@ -1008,7 +976,6 @@ if is_admin:
             if kpi_df.empty:
                 st.info("لا توجد بيانات كافية لحساب مؤشرات الأداء الرئيسية.")
             else:
-                # 📋 عنوان جدول المؤشرات (وسط / 22 / عريض)
                 st.markdown(
                     """
                     <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
@@ -1018,7 +985,6 @@ if is_admin:
                     unsafe_allow_html=True
                 )
 
-                # 📋 عرض الجدول مع تنسيقات بسيطة
                 kpi_display = kpi_df.copy()
                 for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"]:
                     if c in kpi_display.columns:
@@ -1035,7 +1001,6 @@ if is_admin:
                     hide_index=True
                 )
 
-                # 📊 رسم مقارنة السعادة العامة/الرضا عن الرسوم/NPS حسب الجهة
                 metric_cols = [c for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"] if c in kpi_df.columns]
                 if metric_cols:
                     melted_kpi = kpi_df.melt(
@@ -1069,35 +1034,27 @@ if is_admin:
                     )
                     st.plotly_chart(fig_kpi, use_container_width=True)
 
-        # ==============================
-        # 2️⃣ مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
-        # ==============================
         if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
-            # 1️⃣ نبحث عن الأعمدة الفرعية للأبعاد DimX. (مثل Dim1.1 / Dim2.3)
             dim_subcols = [c for c in df_all.columns if re.match(r"Dim\d+\.", str(c).strip())]
 
             if not dim_subcols:
                 st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
             else:
-                # نستخرج أرقام الأبعاد الرئيسية الموجودة (1,2,3,...) من DimX.Y
                 main_ids = sorted({
                     int(re.match(r"Dim(\d+)\.", str(c).strip()).group(1))
                     for c in dim_subcols
                     if re.match(r"Dim(\d+)\.", str(c).strip())
                 })
 
-                # 2️⃣ حساب نتيجة كل بُعد رئيسي لكل جهة
                 rows = []
                 for ent, g in df_all.groupby("ENTITY_NAME"):
                     for i in main_ids:
-                        # كل الأعمدة الفرعية التي تبدأ بـ Dim{i}.
                         sub = [c for c in g.columns if str(c).startswith(f"Dim{i}.")]
                         if not sub:
                             continue
 
-                        # متوسط الأسئلة الفرعية لهذا البعد
                         dim_series = g[sub].apply(pd.to_numeric, errors="coerce").mean(axis=1)
                         score = series_to_percent(dim_series)
 
@@ -1112,9 +1069,8 @@ if is_admin:
                 if dim_comp_df.empty:
                     st.info("لا توجد نتائج كافية لحساب الأبعاد لكل جهة.")
                 else:
-                    # 3️⃣ استبدال أسماء الأبعاد من ورقة Questions (نفس منطق تبويب الأبعاد)
                     for sheet_name in lookup_catalog.keys():
-                        if "QUESTION" in sheet_name.upper():  # Question / Questions
+                        if "QUESTION" in sheet_name.upper():
                             qtbl = lookup_catalog[sheet_name].copy()
                             qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
 
@@ -1145,13 +1101,10 @@ if is_admin:
 
                             break
                     else:
-                        # لو ما لقينا ورقة Questions
                         dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
 
-                    # تقريب النسب
                     dim_comp_df["Score"] = dim_comp_df["Score"].round(1)
 
-                    # 4️⃣ عنوان جدول المقارنات (وسط / 22 / عريض)
                     st.markdown(
                         """
                         <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
@@ -1161,7 +1114,6 @@ if is_admin:
                         unsafe_allow_html=True
                     )
 
-                    # 4️⃣ عرض جدول المقارنات
                     st.dataframe(
                         dim_comp_df[["Dimension", "Dimension_label", "الجهة", "Score"]]
                         .rename(columns={
@@ -1173,7 +1125,7 @@ if is_admin:
                         use_container_width=True,
                         hide_index=True
                     )
-                    # نرتب الأبعاد بالترتيب الرقمي Dim1, Dim2, ...
+
                     dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
                     dim_comp_df_sorted = dim_comp_df.sort_values(["Order", "الجهة"])
 
@@ -1211,5 +1163,3 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
-
-
