@@ -110,14 +110,14 @@ p, label, span, li {
     text-align: right !important;
 }
 
-/* شريط التبويبات: يبدأ من اليمين بشكل مضمون */
+/* شريط التبويبات — RTL بدون قلب الترتيب */
 .stTabs [data-baseweb="tab-list"] {
     direction: rtl !important;
     display: flex !important;
-    flex-direction: row-reverse !important;   /* ✅ الأول يظهر يمين */
-    justify-content: flex-end !important;     /* ✅ محاذاة يمين */
+    justify-content: flex-start !important;  /* أول تبويب يكون يمين */
     width: 100% !important;
 }
+
 
 /* نص كل تبويب RTL ومحاذى يمين */
 .stTabs [data-baseweb="tab"] > div {
@@ -1163,3 +1163,4 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
