@@ -895,26 +895,29 @@ with tab_pareto:
 # =========================================================
 if is_admin:
     df_all, _ = load_all_entities()
+
     with tab_admin:
 
         if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
-            # ==============================
-            # 1️⃣ مقارنة مؤشرات الأداء الرئيسية حسب الجهة
-            # ==============================
+            # =========================================================
+            # 1) جدول مقارنة مؤشرات الأداء الرئيسية حسب الجهة + تنزيل
+            # =========================================================
             csat_col, Fees_col, nps_col = autodetect_metric_cols(df_all)
-            work = df_all.copy()
 
             rows = []
-            for ent, g in work.groupby("ENTITY_NAME"):
+            for ent, g in df_all.groupby("ENTITY_NAME"):
                 row = {"الجهة": ent, "عدد الردود": len(g)}
+
                 if csat_col:
                     row["السعادة العامة (%)"] = series_to_percent(g[csat_col])
                 if Fees_col:
                     row["الرضا عن الرسوم (%)"] = series_to_percent(g[Fees_col])
+
                 nps_val, _, _, _, _ = detect_nps(g)
                 row["NPS (%)"] = nps_val
+
                 rows.append(row)
 
             kpi_df = pd.DataFrame(rows)
@@ -934,7 +937,7 @@ if is_admin:
                 kpi_display = kpi_df.copy()
                 for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"]:
                     if c in kpi_display.columns:
-                        kpi_display[c] = kpi_display[c].round(1)
+                        kpi_display[c] = pd.to_numeric(kpi_display[c], errors="coerce").round(1)
 
                 st.dataframe(
                     kpi_display.style.format({
@@ -960,15 +963,14 @@ if is_admin:
 
             st.markdown("---")
 
-            # ==============================
-            # 2️⃣ مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
-            # ==============================
+            # =========================================================
+            # 2) جدول مقارنة الأبعاد (مرتب): الجهات صفوف × الأبعاد أعمدة + تنزيل
+            # =========================================================
             dim_subcols = [c for c in df_all.columns if re.match(r"Dim\d+\.", str(c).strip())]
 
             if not dim_subcols:
                 st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
             else:
-                # استخراج أرقام الأبعاد الرئيسية الموجودة
                 main_ids = sorted({
                     int(re.match(r"Dim(\d+)\.", str(c).strip()).group(1))
                     for c in dim_subcols
@@ -997,7 +999,7 @@ if is_admin:
                 if dim_comp_df.empty:
                     st.info("لا توجد نتائج كافية لحساب الأبعاد لكل جهة.")
                 else:
-                    # تسمية افتراضية (نفس الرمز)
+                    # تسمية افتراضية للأبعاد (سنحاول استبدالها من Questions إن توفرت)
                     dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
 
                     # محاولة استبدال أسماء الأبعاد من ورقة Questions إن وُجدت
@@ -1019,10 +1021,7 @@ if is_admin:
                                 )
                             break
 
-                    # ترتيب الأبعاد
-                    dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
-                    dim_comp_df = dim_comp_df.sort_values(["Order", "الجهة"])
-                    dim_comp_df["Score"] = dim_comp_df["Score"].round(1)
+                    dim_comp_df["Score"] = pd.to_numeric(dim_comp_df["Score"], errors="coerce").round(1)
 
                     st.markdown(
                         """
@@ -1033,32 +1032,46 @@ if is_admin:
                         unsafe_allow_html=True
                     )
 
-                    dim_table = (
-                        dim_comp_df[["Dimension", "Dimension_label", "الجهة", "Score"]]
-                        .rename(columns={
-                            "Dimension": "رمز البعد",
-                            "Dimension_label": "اسم البعد",
-                            "Score": "النسبة (%)"
-                        })
+                    # ✅ Pivot: الجهات صفوف × الأبعاد أعمدة
+                    dim_pivot = (
+                        dim_comp_df
+                        .pivot_table(
+                            index="الجهة",
+                            columns="Dimension_label",
+                            values="Score",
+                            aggfunc="mean"
+                        )
+                        .reset_index()
                     )
 
+                    # ترتيب الأعمدة: (الجهة أولاً) ثم الأبعاد حسب ترتيب Dim1, Dim2, ...
+                    label_order = (
+                        dim_comp_df[["Dimension", "Dimension_label"]]
+                        .drop_duplicates()
+                        .assign(Order=lambda d: d["Dimension"].str.extract(r"(\d+)").astype(float))
+                        .sort_values("Order")["Dimension_label"]
+                        .tolist()
+                    )
+                    ordered_cols = ["الجهة"] + [c for c in label_order if c in dim_pivot.columns]
+                    dim_pivot = dim_pivot[ordered_cols]
+
                     st.dataframe(
-                        dim_table.style.format({"النسبة (%)": "{:.1f}%"}),
+                        dim_pivot.style.format({c: "{:.1f}%" for c in dim_pivot.columns if c != "الجهة"}),
                         use_container_width=True,
                         hide_index=True
                     )
 
-                    # ✅ تنزيل جدول الأبعاد
+                    # ✅ تنزيل جدول الأبعاد (Pivot)
                     dim_buf = io.BytesIO()
                     with pd.ExcelWriter(dim_buf, engine="openpyxl") as writer:
-                        dim_table.to_excel(writer, index=False, sheet_name="Dimensions_Comparison")
+                        dim_pivot.to_excel(writer, index=False, sheet_name="Dimensions_Comparison")
                     st.download_button(
                         "📥 تنزيل جدول الأبعاد (Excel)",
                         data=dim_buf.getvalue(),
                         file_name=f"Dimensions_Comparison_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-                    
+             
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -1069,4 +1082,5 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 #نضيف العام المقبل نقطتين من شات جي بي تي، نقطتي التوصيات وإعداد تقرير كامل. ممكن أن نعطي نموذج تقرير ونطلب منه أن يقوم بإعداد تقرير نفسه. 
+
 
