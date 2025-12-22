@@ -896,11 +896,13 @@ with tab_pareto:
 if is_admin:
     df_all, _ = load_all_entities()
     with tab_admin:
-        # (باقي كود المقارنات كما عندك)
-        # ملاحظة: لم أغير أي شيء هنا لأن مشكلتك كانت CSS فقط
+
         if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
+            # ==============================
+            # 1️⃣ مقارنة مؤشرات الأداء الرئيسية حسب الجهة
+            # ==============================
             csat_col, Fees_col, nps_col = autodetect_metric_cols(df_all)
             work = df_all.copy()
 
@@ -945,6 +947,118 @@ if is_admin:
                     hide_index=True
                 )
 
+                # ✅ تنزيل جدول المؤشرات
+                kpi_buf = io.BytesIO()
+                with pd.ExcelWriter(kpi_buf, engine="openpyxl") as writer:
+                    kpi_display.to_excel(writer, index=False, sheet_name="KPI_Comparison")
+                st.download_button(
+                    "📥 تنزيل جدول المؤشرات (Excel)",
+                    data=kpi_buf.getvalue(),
+                    file_name=f"KPI_Comparison_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            st.markdown("---")
+
+            # ==============================
+            # 2️⃣ مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
+            # ==============================
+            dim_subcols = [c for c in df_all.columns if re.match(r"Dim\d+\.", str(c).strip())]
+
+            if not dim_subcols:
+                st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
+            else:
+                # استخراج أرقام الأبعاد الرئيسية الموجودة
+                main_ids = sorted({
+                    int(re.match(r"Dim(\d+)\.", str(c).strip()).group(1))
+                    for c in dim_subcols
+                    if re.match(r"Dim(\d+)\.", str(c).strip())
+                })
+
+                # حساب نتيجة كل بُعد رئيسي لكل جهة
+                rows = []
+                for ent, g in df_all.groupby("ENTITY_NAME"):
+                    for i in main_ids:
+                        sub = [c for c in g.columns if str(c).startswith(f"Dim{i}.")]
+                        if not sub:
+                            continue
+
+                        dim_series = g[sub].apply(pd.to_numeric, errors="coerce").mean(axis=1)
+                        score = series_to_percent(dim_series)
+
+                        rows.append({
+                            "الجهة": ent,
+                            "Dimension": f"Dim{i}",
+                            "Score": score
+                        })
+
+                dim_comp_df = pd.DataFrame(rows).dropna(subset=["Score"])
+
+                if dim_comp_df.empty:
+                    st.info("لا توجد نتائج كافية لحساب الأبعاد لكل جهة.")
+                else:
+                    # تسمية افتراضية (نفس الرمز)
+                    dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
+
+                    # محاولة استبدال أسماء الأبعاد من ورقة Questions إن وُجدت
+                    for sheet_name in lookup_catalog.keys():
+                        if "QUESTION" in sheet_name.upper():
+                            qtbl = lookup_catalog[sheet_name].copy()
+                            qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
+
+                            code_col = next((c for c in qtbl.columns if any(k in c for k in ["DIM", "CODE", "QUESTION", "ID"])), None)
+                            name_col = next((c for c in qtbl.columns if any(k in c for k in ["ARABIC", "NAME", "LABEL", "TEXT"])), None)
+
+                            if code_col and name_col:
+                                def _norm(s):
+                                    return s.astype(str).str.upper().str.replace(r"\s+", "", regex=True)
+
+                                map_dict = dict(zip(_norm(qtbl[code_col]), qtbl[name_col].astype(str)))
+                                dim_comp_df["Dimension_label"] = (
+                                    _norm(dim_comp_df["Dimension"]).map(map_dict).fillna(dim_comp_df["Dimension"])
+                                )
+                            break
+
+                    # ترتيب الأبعاد
+                    dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
+                    dim_comp_df = dim_comp_df.sort_values(["Order", "الجهة"])
+                    dim_comp_df["Score"] = dim_comp_df["Score"].round(1)
+
+                    st.markdown(
+                        """
+                        <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
+                        📋 مقارنة الأبعاد الرئيسية بين الجهات
+                        </h3>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    dim_table = (
+                        dim_comp_df[["Dimension", "Dimension_label", "الجهة", "Score"]]
+                        .rename(columns={
+                            "Dimension": "رمز البعد",
+                            "Dimension_label": "اسم البعد",
+                            "Score": "النسبة (%)"
+                        })
+                    )
+
+                    st.dataframe(
+                        dim_table.style.format({"النسبة (%)": "{:.1f}%"}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    # ✅ تنزيل جدول الأبعاد
+                    dim_buf = io.BytesIO()
+                    with pd.ExcelWriter(dim_buf, engine="openpyxl") as writer:
+                        dim_table.to_excel(writer, index=False, sheet_name="Dimensions_Comparison")
+                    st.download_button(
+                        "📥 تنزيل جدول الأبعاد (Excel)",
+                        data=dim_buf.getvalue(),
+                        file_name=f"Dimensions_Comparison_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    
 # =========================================================
 # تحسينات شكلية
 # =========================================================
@@ -954,3 +1068,5 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+#نضيف العام المقبل نقطتين من شات جي بي تي، نقطتي التوصيات وإعداد تقرير كامل. ممكن أن نعطي نموذج تقرير ونطلب منه أن يقوم بإعداد تقرير نفسه. 
+
