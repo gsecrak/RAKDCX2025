@@ -895,24 +895,30 @@ with tab_pareto:
 # =========================================================
 if is_admin:
     df_all, _ = load_all_entities()
+
     with tab_admin:
-        # (باقي كود المقارنات كما عندك)
-        # ملاحظة: لم أغير أي شيء هنا لأن مشكلتك كانت CSS فقط
+
         if "ENTITY_NAME" not in df_all.columns:
             st.warning("⚠️ لا يوجد عمود ENTITY_NAME في البيانات المجمّعة.")
         else:
+            # ==============================
+            # 1️⃣ مقارنة مؤشرات الأداء الرئيسية حسب الجهة
+            # ==============================
             csat_col, Fees_col, nps_col = autodetect_metric_cols(df_all)
             work = df_all.copy()
 
             rows = []
             for ent, g in work.groupby("ENTITY_NAME"):
                 row = {"الجهة": ent, "عدد الردود": len(g)}
+
                 if csat_col:
                     row["السعادة العامة (%)"] = series_to_percent(g[csat_col])
                 if Fees_col:
                     row["الرضا عن الرسوم (%)"] = series_to_percent(g[Fees_col])
+
                 nps_val, _, _, _, _ = detect_nps(g)
                 row["NPS (%)"] = nps_val
+
                 rows.append(row)
 
             kpi_df = pd.DataFrame(rows)
@@ -932,10 +938,34 @@ if is_admin:
                 kpi_display = kpi_df.copy()
                 for c in ["السعادة العامة (%)", "الرضا عن الرسوم (%)", "NPS (%)"]:
                     if c in kpi_display.columns:
-                        kpi_display[c] = kpi_display[c].round(1)
+                        kpi_display[c] = pd.to_numeric(kpi_display[c], errors="coerce").round(1)
 
+                # ✅ إضافة 3 صفوف: أعلى/أدنى/متوسط الجهات
+                metric_cols = [c for c in kpi_display.columns if c not in ["الجهة", "عدد الردود"]]
+
+                summary_rows = []
+
+                max_row = {"الجهة": "أعلى الجهات", "عدد الردود": ""}
+                for c in metric_cols:
+                    max_row[c] = pd.to_numeric(kpi_display[c], errors="coerce").max()
+                summary_rows.append(max_row)
+
+                min_row = {"الجهة": "أدنى الجهات", "عدد الردود": ""}
+                for c in metric_cols:
+                    min_row[c] = pd.to_numeric(kpi_display[c], errors="coerce").min()
+                summary_rows.append(min_row)
+
+                avg_row = {"الجهة": "متوسط الجهات", "عدد الردود": ""}
+                for c in metric_cols:
+                    avg_row[c] = pd.to_numeric(kpi_display[c], errors="coerce").mean()
+                summary_rows.append(avg_row)
+
+                summary_kpi_df = pd.DataFrame(summary_rows)
+                kpi_final = pd.concat([kpi_display, summary_kpi_df], ignore_index=True)
+
+                # عرض جدول المؤشرات النهائي
                 st.dataframe(
-                    kpi_display.style.format({
+                    kpi_final.style.format({
                         "السعادة العامة (%)": "{:.1f}%",
                         "الرضا عن الرسوم (%)": "{:.1f}%",
                         "NPS (%)": "{:.1f}%",
@@ -944,6 +974,126 @@ if is_admin:
                     use_container_width=True,
                     hide_index=True
                 )
+
+                # 📥 تنزيل جدول المؤشرات (Excel) — مع صفوف الملخص
+                kpi_buf = io.BytesIO()
+                with pd.ExcelWriter(kpi_buf, engine="openpyxl") as writer:
+                    kpi_final.to_excel(writer, index=False, sheet_name="KPI_Comparison")
+                st.download_button(
+                    "📥 تنزيل جدول المؤشرات (Excel)",
+                    data=kpi_buf.getvalue(),
+                    file_name=f"KPI_Comparison_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            st.markdown("---")
+
+            # ==============================
+            # 2️⃣ مقارنة الجهات حسب الأبعاد الرئيسية (Dim1, Dim2, ...)
+            # ==============================
+            dim_subcols = [c for c in df_all.columns if re.match(r"Dim\d+\.", str(c).strip())]
+
+            if not dim_subcols:
+                st.info("لا توجد أعمدة فرعية للأبعاد (مثل Dim1.1 أو Dim2.3) في البيانات.")
+            else:
+                main_ids = sorted({
+                    int(re.match(r"Dim(\d+)\.", str(c).strip()).group(1))
+                    for c in dim_subcols
+                    if re.match(r"Dim(\d+)\.", str(c).strip())
+                })
+
+                rows = []
+                for ent, g in df_all.groupby("ENTITY_NAME"):
+                    for i in main_ids:
+                        sub = [c for c in g.columns if str(c).startswith(f"Dim{i}.")]
+                        if not sub:
+                            continue
+
+                        dim_series = g[sub].apply(pd.to_numeric, errors="coerce").mean(axis=1)
+                        score = series_to_percent(dim_series)
+
+                        rows.append({
+                            "الجهة": ent,
+                            "Dimension": f"Dim{i}",
+                            "Score": score
+                        })
+
+                dim_comp_df = pd.DataFrame(rows).dropna(subset=["Score"])
+
+                if dim_comp_df.empty:
+                    st.info("لا توجد نتائج كافية لحساب الأبعاد لكل جهة.")
+                else:
+                    dim_comp_df["Dimension_label"] = dim_comp_df["Dimension"]
+
+                    # محاولة استبدال أسماء الأبعاد من ورقة Questions إن وُجدت
+                    for sheet_name in lookup_catalog.keys():
+                        if "QUESTION" in sheet_name.upper():
+                            qtbl = lookup_catalog[sheet_name].copy()
+                            qtbl.columns = [str(c).strip().upper() for c in qtbl.columns]
+
+                            code_col = next((c for c in qtbl.columns if any(k in c for k in ["DIM", "CODE", "QUESTION", "ID"])), None)
+                            name_col = next((c for c in qtbl.columns if any(k in c for k in ["ARABIC", "NAME", "LABEL", "TEXT"])), None)
+
+                            if code_col and name_col:
+                                def _norm(s):
+                                    return s.astype(str).str.upper().str.replace(r"\s+", "", regex=True)
+
+                                map_dict = dict(zip(_norm(qtbl[code_col]), qtbl[name_col].astype(str)))
+                                dim_comp_df["Dimension_label"] = (
+                                    _norm(dim_comp_df["Dimension"]).map(map_dict).fillna(dim_comp_df["Dimension"])
+                                )
+                            break
+
+                    dim_comp_df["Score"] = pd.to_numeric(dim_comp_df["Score"], errors="coerce").round(1)
+                    dim_comp_df["Order"] = dim_comp_df["Dimension"].str.extract(r"(\d+)").astype(float)
+                    dim_comp_df_sorted = dim_comp_df.sort_values(["Order", "الجهة"])
+
+                    st.markdown(
+                        """
+                        <h3 style='text-align:center; font-size:22px; font-weight:bold;'>
+                        📋 مقارنة الأبعاد الرئيسية بين الجهات
+                        </h3>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    dim_table = (
+                        dim_comp_df_sorted[["Dimension", "Dimension_label", "الجهة", "Score"]]
+                        .rename(columns={
+                            "Dimension": "رمز البعد",
+                            "Dimension_label": "اسم البعد",
+                            "Score": "النسبة (%)"
+                        })
+                    )
+
+                    # ✅ إضافة 3 صفوف: أعلى/أدنى/متوسط الجهات (على كامل جدول الأبعاد)
+                    score_series = pd.to_numeric(dim_table["النسبة (%)"], errors="coerce")
+
+                    dim_summary_rows = pd.DataFrame([
+                        {"رمز البعد": "—", "اسم البعد": "أعلى الجهات",   "الجهة": "", "النسبة (%)": score_series.max()},
+                        {"رمز البعد": "—", "اسم البعد": "أدنى الجهات",   "الجهة": "", "النسبة (%)": score_series.min()},
+                        {"رمز البعد": "—", "اسم البعد": "متوسط الجهات", "الجهة": "", "النسبة (%)": score_series.mean()},
+                    ])
+
+                    dim_final = pd.concat([dim_table, dim_summary_rows], ignore_index=True)
+
+                    # عرض جدول الأبعاد النهائي
+                    st.dataframe(
+                        dim_final.style.format({"النسبة (%)": "{:.1f}%"}),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+
+                    # 📥 تنزيل جدول الأبعاد (Excel) — مع صفوف الملخص
+                    dim_buf = io.BytesIO()
+                    with pd.ExcelWriter(dim_buf, engine="openpyxl") as writer:
+                        dim_final.to_excel(writer, index=False, sheet_name="Dimensions_Comparison")
+                    st.download_button(
+                        "📥 تنزيل جدول الأبعاد (Excel)",
+                        data=dim_buf.getvalue(),
+                        file_name=f"Dimensions_Comparison_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
 # =========================================================
 # تحسينات شكلية
@@ -954,3 +1104,4 @@ st.markdown("""
     footer, [data-testid="stFooter"] {opacity: 0.03 !important; height: 1px !important; overflow: hidden !important;}
     </style>
 """, unsafe_allow_html=True)
+
