@@ -264,9 +264,9 @@ def series_to_percent(vals: pd.Series):
         return np.nan
     mx = vals.max()
     if mx <= 5:
-        return ((vals - 1) / 4 * 100).mean()
+        return ((vals ) / 4 * 100).mean()
     elif mx <= 10:
-        return ((vals - 1) / 9 * 100).mean()
+        return ((vals ) / 9 * 100).mean()
     else:
         return vals.mean()
 
@@ -1074,6 +1074,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 #نضيف العام المقبل نقطتين من شات جي بي تي، نقطتي التوصيات وإعداد تقرير كامل. ممكن أن نعطي نموذج تقرير ونطلب منه أن يقوم بإعداد تقرير نفسه. 
+
 
 
 
