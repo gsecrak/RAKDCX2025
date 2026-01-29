@@ -37,7 +37,11 @@ USER_KEYS = {
         "role": "center",
         "file": "EC.csv"
     },
-    
+    "جمارك رأس الخيمة": {
+        "password": st.secrets["users"]["CU"],
+        "role": "center",
+        "file": "CU.csv"    
+    },
     "هيئة حماية البيئة والتنمية": {
         "password": st.secrets["users"]["EN"],
         "role": "center",
@@ -175,6 +179,10 @@ ENTITIES = {
     "دائرة التنمية الاقتصادية": {
         "csv": "EC.csv",
         "xlsx": "Data_tables_EC.xlsx",
+    },
+    "جمارك رأس الخيمة": {
+        "csv": "CU.csv",
+        "xlsx": "Data_tables_CU.xlsx",
     },
      "هيئة حماية البيئة والتنمية": {
         "csv": "EN.csv",
@@ -1074,6 +1082,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 #نضيف العام المقبل نقطتين من شات جي بي تي، نقطتي التوصيات وإعداد تقرير كامل. ممكن أن نعطي نموذج تقرير ونطلب منه أن يقوم بإعداد تقرير نفسه. 
+
 
 
 
