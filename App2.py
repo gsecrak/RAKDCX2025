@@ -770,13 +770,13 @@ with tab_pareto:
     else:
         data_unsat = df_view[[unsat_col]].copy()
         data_unsat.columns = ["Comment"]
-        data_unsat["Comment"] = data_unsat["Comment"].astype(str).str.strip()
+        data_unsat["Comment"] = data_unsat["Comment"].fillna("").astype(str).str.strip()
 
         exclude_terms = ["", " ", "لا يوجد", "لايوجد", "لاشيء", "لا شيء",
                          "none", "no", "nothing", "nil", "جيد", "ممتاز", "ok", "تمام", "great"]
         data_unsat = data_unsat[~data_unsat["Comment"].str.lower().isin([t.lower() for t in exclude_terms])]
-        data_unsat = data_unsat[data_unsat["Comment"].apply(lambda x: len(x.split()) >= 2)]
-
+        data_unsat = data_unsat[    data_unsat["Comment"].fillna("").astype(str).str.split().str.len().ge(2)]
+        
         if data_unsat.empty:
             st.info("لا توجد ملاحظات نصية كافية بعد التنظيف.")
         else:
